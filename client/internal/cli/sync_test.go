@@ -128,6 +128,9 @@ func TestSyncReportsUsageAndAdvancesStateOnSuccess(t *testing.T) {
 	if !strings.Contains(stdout.String(), "accepted=1") {
 		t.Fatalf("expected sync summary, got %q", stdout.String())
 	}
+	if !strings.Contains(stdout.String(), "records=1") || !strings.Contains(stdout.String(), "skipped=0") {
+		t.Fatalf("expected stable sync summary fields, got %q", stdout.String())
+	}
 }
 
 func TestSyncReturnsSuccessWhenNoNewRecordsExist(t *testing.T) {
@@ -175,6 +178,9 @@ func TestSyncReturnsSuccessWhenNoNewRecordsExist(t *testing.T) {
 
 	if !strings.Contains(stdout.String(), "accepted=0") {
 		t.Fatalf("expected zero summary, got %q", stdout.String())
+	}
+	if !strings.Contains(stdout.String(), "records=0") || !strings.Contains(stdout.String(), "skipped=0") {
+		t.Fatalf("expected stable zero summary fields, got %q", stdout.String())
 	}
 }
 

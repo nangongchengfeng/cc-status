@@ -134,10 +134,11 @@ func runSync(state *runtime.State, options BootstrapOptions, stdout io.Writer) e
 
 	_, err = fmt.Fprintf(
 		stdout,
-		"sync summary: files_scanned=%d accepted=%d duplicates=%d errors=%d\n",
+		"sync summary: files_scanned=%d records=%d accepted=%d skipped=%d errors=%d\n",
 		result.FilesScanned,
+		result.Records,
 		result.Accepted,
-		result.Duplicates,
+		result.Skipped,
 		len(result.Errors),
 	)
 	return err

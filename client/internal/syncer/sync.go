@@ -10,8 +10,9 @@ import (
 
 type Result struct {
 	FilesScanned int
+	Records      int
 	Accepted     int
-	Duplicates   int
+	Skipped      int
 	Errors       []string
 }
 
@@ -45,6 +46,7 @@ func RunHappyPath(
 				return result, err
 			}
 			if reported {
+				result.Skipped++
 				continue
 			}
 
@@ -68,6 +70,8 @@ func RunHappyPath(
 	if len(reports) == 0 {
 		return result, nil
 	}
+
+	result.Records = len(reports)
 
 	for start := 0; start < len(reports); start += batchSize {
 		end := start + batchSize
@@ -105,7 +109,7 @@ func RunHappyPath(
 		}
 
 		result.Accepted += response.AcceptedCount
-		result.Duplicates += response.DuplicateCount
+		result.Skipped += response.DuplicateCount
 	}
 
 	return result, nil
