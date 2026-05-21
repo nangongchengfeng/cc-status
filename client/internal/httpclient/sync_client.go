@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -73,20 +74,45 @@ func (client *SyncClient) Sync(clientID string, reports []Report) (SyncResponse,
 		request.Header.Set("Authorization", "Bearer "+client.authToken)
 	}
 
-	response, err := client.httpClient.Do(request)
-	if err != nil {
-		return SyncResponse{}, fmt.Errorf("send sync request: %w", err)
-	}
-	defer response.Body.Close()
+	var lastErr error
+	for attempt := 0; attempt < 3; attempt++ {
+		response, err := client.httpClient.Do(request.Clone(request.Context()))
+		if err != nil {
+			lastErr = fmt.Errorf("send sync request: %w", err)
+			// 只对网络层瞬时错误做指数退避，业务失败交由上层按整批失败处理。
+			if attempt < 2 {
+				time.Sleep(time.Duration(1<<attempt) * 10 * time.Millisecond)
+				continue
+			}
+			return SyncResponse{}, lastErr
+		}
 
-	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return SyncResponse{}, fmt.Errorf("unexpected status code: %d", response.StatusCode)
+		body, readErr := io.ReadAll(response.Body)
+		_ = response.Body.Close()
+		if readErr != nil {
+			return SyncResponse{}, fmt.Errorf("read sync response: %w", readErr)
+		}
+
+		if response.StatusCode >= 500 {
+			lastErr = fmt.Errorf("unexpected status code: %d", response.StatusCode)
+			if attempt < 2 {
+				time.Sleep(time.Duration(1<<attempt) * 10 * time.Millisecond)
+				continue
+			}
+			return SyncResponse{}, lastErr
+		}
+
+		if response.StatusCode < 200 || response.StatusCode >= 300 {
+			return SyncResponse{}, fmt.Errorf("unexpected status code: %d", response.StatusCode)
+		}
+
+		var decoded SyncResponse
+		if err := json.Unmarshal(body, &decoded); err != nil {
+			return SyncResponse{}, fmt.Errorf("decode sync response: %w", err)
+		}
+
+		return decoded, nil
 	}
 
-	var decoded SyncResponse
-	if err := json.NewDecoder(response.Body).Decode(&decoded); err != nil {
-		return SyncResponse{}, fmt.Errorf("decode sync response: %w", err)
-	}
-
-	return decoded, nil
+	return SyncResponse{}, lastErr
 }

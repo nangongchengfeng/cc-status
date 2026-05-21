@@ -32,6 +32,7 @@ func RunHappyPath(
 
 	reports := make([]httpclient.Report, 0)
 	filesByRequestID := make(map[string]claude.FileScanResult)
+	pendingByFile := make(map[string]int)
 	for _, fileResult := range fileResults {
 		if fileResult.Error != nil {
 			result.Errors = append(result.Errors, fmt.Sprintf("%s: %v", fileResult.FilePath, fileResult.Error))
@@ -39,6 +40,14 @@ func RunHappyPath(
 		}
 		for _, record := range fileResult.Records {
 			requestID := "session:" + record.MessageID
+			reported, err := store.HasReported(requestID)
+			if err != nil {
+				return result, err
+			}
+			if reported {
+				continue
+			}
+
 			reports = append(reports, httpclient.Report{
 				RequestID:           requestID,
 				AppType:             "claude",
@@ -52,6 +61,7 @@ func RunHappyPath(
 				DataSource:          "session_log",
 			})
 			filesByRequestID[requestID] = fileResult
+			pendingByFile[fileResult.FilePath]++
 		}
 	}
 
@@ -83,19 +93,19 @@ func RunHappyPath(
 			if err := store.MarkReported(report.RequestID); err != nil {
 				return result, err
 			}
+
+			fileResult := filesByRequestID[report.RequestID]
+			pendingByFile[fileResult.FilePath]--
+			// 只有该文件当前轮次所有“未上报记录”都确认成功后，才推进它的 sync_state。
+			if pendingByFile[fileResult.FilePath] == 0 {
+				if err := store.UpdateSyncState(fileResult.FilePath, fileResult.LastModifiedNanos, fileResult.LastLineOffset); err != nil {
+					return result, err
+				}
+			}
 		}
 
 		result.Accepted += response.AcceptedCount
 		result.Duplicates += response.DuplicateCount
-	}
-
-	for _, fileResult := range fileResults {
-		if fileResult.Error != nil {
-			continue
-		}
-		if err := store.UpdateSyncState(fileResult.FilePath, fileResult.LastModifiedNanos, fileResult.LastLineOffset); err != nil {
-			return result, err
-		}
 	}
 
 	return result, nil

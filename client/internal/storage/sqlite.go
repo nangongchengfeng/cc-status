@@ -76,6 +76,21 @@ func (store *Store) MarkReported(requestID string) error {
 	return nil
 }
 
+func (store *Store) HasReported(requestID string) (bool, error) {
+	var exists int
+	err := store.db.QueryRow(
+		`SELECT 1 FROM reported_ids WHERE request_id = ? LIMIT 1`,
+		requestID,
+	).Scan(&exists)
+	if err == nil {
+		return true, nil
+	}
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	return false, fmt.Errorf("query reported state: %w", err)
+}
+
 func (store *Store) UpdateSyncState(filePath string, lastModified int64, lastLineOffset int) error {
 	_, err := store.db.Exec(
 		`INSERT OR REPLACE INTO sync_state(file_path, last_modified, last_line_offset) VALUES(?, ?, ?)`,
