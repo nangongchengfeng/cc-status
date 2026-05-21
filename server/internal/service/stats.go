@@ -165,8 +165,8 @@ func buildTopModels(modelTokens map[string]int64) []dto.StatsModelRank {
 		return items[left].Tokens > items[right].Tokens
 	})
 
-	if len(items) > 5 {
-		return items[:5]
+	if len(items) > 10 {
+		return items[:10]
 	}
 	return items
 }
@@ -189,8 +189,8 @@ func buildTopClients(clientCosts map[string]*big.Rat) []dto.StatsClientRank {
 		return leftCost.Cmp(rightCost) > 0
 	})
 
-	if len(items) > 5 {
-		return items[:5]
+	if len(items) > 10 {
+		return items[:10]
 	}
 	return items
 }

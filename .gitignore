@@ -1,0 +1,20 @@
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Build
+dist/
+bin/
+*.exe
+
+# OS
+.DS_Store
+Thumbs.db
