@@ -54,6 +54,8 @@ type rawEnvelope struct {
 	} `json:"message"`
 }
 
+const maxJSONLLineSize = 4 * 1024 * 1024
+
 func ScanProjectsDir(projectsDir string) (ScanResult, error) {
 	fileResults, err := ScanProjectFiles(projectsDir)
 	if err != nil {
@@ -125,6 +127,8 @@ func scanFile(filePath string) (FileScanResult, error) {
 	lineCount := 0
 
 	scanner := bufio.NewScanner(file)
+	// Claude 会话里可能出现超长单行 JSONL，放大 scanner 缓冲区避免 "token too long"。
+	scanner.Buffer(make([]byte, 0, 64*1024), maxJSONLLineSize)
 	for scanner.Scan() {
 		lineCount++
 		line := scanner.Bytes()

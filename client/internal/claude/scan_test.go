@@ -3,6 +3,7 @@ package claude
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -106,5 +107,40 @@ func TestScanProjectsDirIncludesSubagentLogs(t *testing.T) {
 
 	if len(result.Records) != 1 || result.Records[0].MessageID != "subagent-msg" {
 		t.Fatalf("expected subagent record to be included, got %#v", result.Records)
+	}
+}
+
+func TestScanProjectsDirHandlesVeryLongJSONLLine(t *testing.T) {
+	t.Parallel()
+
+	projectsDir := filepath.Join(t.TempDir(), "projects")
+	projectDir := filepath.Join(projectsDir, "demo-project")
+	if err := os.MkdirAll(projectDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll() returned error: %v", err)
+	}
+
+	veryLongSessionID := "session-" + strings.Repeat("x", 128*1024)
+	logLine := "{\"type\":\"assistant\",\"message\":{\"id\":\"long-line-msg\",\"model\":\"claude-sonnet-4\",\"usage\":{\"input_tokens\":11,\"output_tokens\":5},\"stop_reason\":\"end_turn\"},\"timestamp\":\"2026-04-05T12:00:00Z\",\"sessionId\":\"" + veryLongSessionID + "\"}\n"
+
+	logPath := filepath.Join(projectDir, "session.jsonl")
+	if err := os.WriteFile(logPath, []byte(logLine), 0o644); err != nil {
+		t.Fatalf("WriteFile() returned error: %v", err)
+	}
+
+	result, err := ScanProjectsDir(projectsDir)
+	if err != nil {
+		t.Fatalf("ScanProjectsDir() returned error: %v", err)
+	}
+
+	if len(result.Errors) != 0 {
+		t.Fatalf("expected no scan errors for long JSONL line, got %#v", result.Errors)
+	}
+
+	if len(result.Records) != 1 {
+		t.Fatalf("expected 1 parsed record, got %d", len(result.Records))
+	}
+
+	if result.Records[0].MessageID != "long-line-msg" {
+		t.Fatalf("unexpected message id: %q", result.Records[0].MessageID)
 	}
 }
