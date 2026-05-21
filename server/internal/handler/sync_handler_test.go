@@ -100,6 +100,59 @@ func TestSyncRoutePersistsBatchAndReturnsLegacyPayload(t *testing.T) {
 	}
 }
 
+func TestSyncRouteRequiresAuth(t *testing.T) {
+	t.Parallel()
+
+	dbPath := filepath.Join(t.TempDir(), "server.db")
+	db, err := repository.OpenDatabase(dbPath)
+	if err != nil {
+		t.Fatalf("OpenDatabase() returned error: %v", err)
+	}
+	if err := repository.InitializeSchema(db); err != nil {
+		t.Fatalf("InitializeSchema() returned error: %v", err)
+	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("DB() returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = sqlDB.Close()
+	})
+
+	body := map[string]any{
+		"client_id": "client-1",
+		"reports": []map[string]any{
+			{
+				"request_id":            "session:msg-auth",
+				"app_type":              "claude",
+				"model":                 "claude-sonnet-4-0",
+				"input_tokens":          10,
+				"output_tokens":         20,
+				"cache_read_tokens":     0,
+				"cache_creation_tokens": 0,
+				"created_at":            int64(1743840000),
+				"session_id":            "session-1",
+				"data_source":           "session_log",
+			},
+		},
+	}
+	payload, err := json.Marshal(body)
+	if err != nil {
+		t.Fatalf("Marshal() returned error: %v", err)
+	}
+
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/sync", bytes.NewReader(payload))
+	request.Header.Set("Content-Type", "application/json")
+	recorder := httptest.NewRecorder()
+
+	newTestSyncRouter(t, db).ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+}
+
 func TestSyncRouteRejectsInvalidPayloads(t *testing.T) {
 	t.Parallel()
 
