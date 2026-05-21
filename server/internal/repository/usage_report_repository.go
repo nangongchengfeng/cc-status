@@ -23,6 +23,19 @@ func NewUsageReportRepository() *UsageReportRepository {
 	return &UsageReportRepository{}
 }
 
+// List 返回全部使用记录，供统计查询聚合使用。
+func (repository *UsageReportRepository) List(
+	ctx context.Context,
+	db *gorm.DB,
+) ([]entity.UsageReport, error) {
+	var reports []entity.UsageReport
+	if err := db.WithContext(ctx).Order("id ASC").Find(&reports).Error; err != nil {
+		return nil, err
+	}
+
+	return reports, nil
+}
+
 // InsertBatch 在调用方提供的事务里逐条写入，并把唯一键冲突折算为重复数。
 func (repository *UsageReportRepository) InsertBatch(
 	_ context.Context,

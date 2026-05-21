@@ -459,7 +459,7 @@ func newTestSyncRouter(t *testing.T, db *gorm.DB) http.Handler {
 	t.Helper()
 
 	syncHandler := NewSyncHandler(service.NewSyncService(db))
-	return NewRouter("secret-token", syncHandler.HandleSync, nil)
+	return NewRouter("secret-token", syncHandler.HandleSync, nil, nil)
 }
 
 func performSyncRequest(t *testing.T, router http.Handler, body map[string]any) *httptest.ResponseRecorder {

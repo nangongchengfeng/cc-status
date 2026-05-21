@@ -350,5 +350,5 @@ func newTestModelPricingRouter(t *testing.T, db *gorm.DB) http.Handler {
 
 	syncHandler := NewSyncHandler(service.NewSyncService(db))
 	modelPricingHandler := NewModelPricingHandler(service.NewModelPricingService(db))
-	return NewRouter("secret-token", syncHandler.HandleSync, modelPricingHandler)
+	return NewRouter("secret-token", syncHandler.HandleSync, modelPricingHandler, nil)
 }
