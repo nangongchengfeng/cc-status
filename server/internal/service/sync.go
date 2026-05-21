@@ -21,6 +21,11 @@ type UsageReportWriter interface {
 	InsertBatch(context.Context, *gorm.DB, []entity.UsageReport) (repository.InsertBatchResult, error)
 }
 
+// UsageReportPricer 定义同步服务所需的最小定价计算能力。
+type UsageReportPricer interface {
+	ApplyToReport(context.Context, *gorm.DB, entity.UsageReport) (entity.UsageReport, error)
+}
+
 // ValidationError 用于把请求校验错误映射成 400。
 type ValidationError struct {
 	message string
@@ -34,19 +39,38 @@ func (validationError ValidationError) Error() string {
 type SyncService struct {
 	db     *gorm.DB
 	writer UsageReportWriter
+	pricer UsageReportPricer
 	now    func() time.Time
 }
 
 // NewSyncService 创建默认同步服务。
 func NewSyncService(db *gorm.DB) *SyncService {
-	return NewSyncServiceWithWriter(db, repository.NewUsageReportRepository())
+	return NewSyncServiceWithDependencies(
+		db,
+		repository.NewUsageReportRepository(),
+		NewPricingService(repository.NewModelPricingRepository()),
+	)
 }
 
 // NewSyncServiceWithWriter 为测试或特殊场景注入自定义 writer。
 func NewSyncServiceWithWriter(db *gorm.DB, writer UsageReportWriter) *SyncService {
+	return NewSyncServiceWithDependencies(
+		db,
+		writer,
+		NewPricingService(repository.NewModelPricingRepository()),
+	)
+}
+
+// NewSyncServiceWithDependencies 为测试或特殊场景注入完整依赖。
+func NewSyncServiceWithDependencies(
+	db *gorm.DB,
+	writer UsageReportWriter,
+	pricer UsageReportPricer,
+) *SyncService {
 	return &SyncService{
 		db:     db,
 		writer: writer,
+		pricer: pricer,
 		now:    time.Now,
 	}
 }
@@ -60,7 +84,16 @@ func (service *SyncService) Ingest(ctx context.Context, request dto.SyncRequest)
 
 	var result dto.SyncResult
 	err = service.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		insertResult, insertErr := service.writer.InsertBatch(ctx, tx, reports)
+		pricedReports := make([]entity.UsageReport, 0, len(reports))
+		for _, report := range reports {
+			pricedReport, priceErr := service.pricer.ApplyToReport(ctx, tx, report)
+			if priceErr != nil {
+				return priceErr
+			}
+			pricedReports = append(pricedReports, pricedReport)
+		}
+
+		insertResult, insertErr := service.writer.InsertBatch(ctx, tx, pricedReports)
 		if insertErr != nil {
 			return insertErr
 		}
@@ -167,7 +200,7 @@ func (service *SyncService) normalizeReport(
 		CacheCreationCostUSD: "0",
 		TotalCostUSD:         "0",
 		SessionID:            sessionID,
-		PricingSource:        "placeholder",
+		PricingSource:        "",
 		CreatedAtUnix:        report.CreatedAt,
 		DataSource:           dataSource,
 	}, nil
