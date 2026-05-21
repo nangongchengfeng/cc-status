@@ -2,6 +2,11 @@
 
 `cc-status/server` 是接收 Claude Code 使用记录、计算费用并提供查询统计 API 的服务端。
 
+## 相关 ADR
+
+- `docs/adr/0001-server-domain-uses-usage-reports.md`：说明为什么服务端核心域使用 `usage_reports`，而不是历史材料中的 `proxy_request_logs`
+- `docs/adr/0002-server-config-uses-stdlib-and-env.md`：说明为什么首版配置层使用标准库与环境变量，而不是立即引入 `viper`
+
 ## 本地启动
 
 在仓库根目录执行：
