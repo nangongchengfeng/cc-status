@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"fmt"
+	"time"
 
 	_ "modernc.org/sqlite"
 )
@@ -61,6 +62,31 @@ func (store *Store) LoadOrCreateClientID() (string, error) {
 	}
 
 	return clientID, nil
+}
+
+func (store *Store) MarkReported(requestID string) error {
+	_, err := store.db.Exec(
+		`INSERT OR REPLACE INTO reported_ids(request_id, reported_at) VALUES(?, ?)`,
+		requestID,
+		time.Now().Unix(),
+	)
+	if err != nil {
+		return fmt.Errorf("mark reported: %w", err)
+	}
+	return nil
+}
+
+func (store *Store) UpdateSyncState(filePath string, lastModified int64, lastLineOffset int) error {
+	_, err := store.db.Exec(
+		`INSERT OR REPLACE INTO sync_state(file_path, last_modified, last_line_offset) VALUES(?, ?, ?)`,
+		filePath,
+		lastModified,
+		lastLineOffset,
+	)
+	if err != nil {
+		return fmt.Errorf("update sync state: %w", err)
+	}
+	return nil
 }
 
 func (store *Store) ensureSchema() error {

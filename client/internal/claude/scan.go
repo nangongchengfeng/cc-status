@@ -29,6 +29,14 @@ type ScanResult struct {
 	Errors       []string
 }
 
+type FileScanResult struct {
+	FilePath          string
+	LastLineOffset    int
+	LastModifiedNanos int64
+	Records           []TokenUsage
+	Error             error
+}
+
 type rawEnvelope struct {
 	Type      string `json:"type"`
 	Timestamp string `json:"timestamp"`
@@ -47,23 +55,39 @@ type rawEnvelope struct {
 }
 
 func ScanProjectsDir(projectsDir string) (ScanResult, error) {
-	files, err := collectJSONLFiles(projectsDir)
+	fileResults, err := ScanProjectFiles(projectsDir)
 	if err != nil {
 		return ScanResult{}, err
 	}
 
 	result := ScanResult{
-		FilesScanned: len(files),
+		FilesScanned: len(fileResults),
 	}
-	for _, filePath := range files {
-		usages, scanErr := scanFile(filePath)
-		if scanErr != nil {
-			result.Errors = append(result.Errors, fmt.Sprintf("%s: %v", filePath, scanErr))
+	for _, fileResult := range fileResults {
+		if fileResult.Error != nil {
+			result.Errors = append(result.Errors, fmt.Sprintf("%s: %v", fileResult.FilePath, fileResult.Error))
 		}
-		result.Records = append(result.Records, usages...)
+		result.Records = append(result.Records, fileResult.Records...)
 	}
 
 	return result, nil
+}
+
+func ScanProjectFiles(projectsDir string) ([]FileScanResult, error) {
+	files, err := collectJSONLFiles(projectsDir)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]FileScanResult, 0, len(files))
+	for _, filePath := range files {
+		fileResult, scanErr := scanFile(filePath)
+		fileResult.FilePath = filePath
+		fileResult.Error = scanErr
+		results = append(results, fileResult)
+	}
+
+	return results, nil
 }
 
 func collectJSONLFiles(projectsDir string) ([]string, error) {
@@ -89,24 +113,26 @@ func collectJSONLFiles(projectsDir string) ([]string, error) {
 	return files, nil
 }
 
-func scanFile(filePath string) ([]TokenUsage, error) {
+func scanFile(filePath string) (FileScanResult, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("open file: %w", err)
+		return FileScanResult{}, fmt.Errorf("open file: %w", err)
 	}
 	defer file.Close()
 
 	bestByMessageID := make(map[string]TokenUsage)
 	seenStopReason := make(map[string]bool)
+	lineCount := 0
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
+		lineCount++
 		line := scanner.Bytes()
 
 		usage, hasStopReason, keep, parseErr := parseLine(line)
 		if parseErr != nil {
 			// 尾部半写入时保留当前文件之前已经解析出的有效记录，并把错误交给上层汇总。
-			return mapValues(bestByMessageID), parseErr
+			return buildFileScanResult(filePath, lineCount, mapValues(bestByMessageID)), parseErr
 		}
 		if !keep {
 			continue
@@ -123,10 +149,10 @@ func scanFile(filePath string) ([]TokenUsage, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return mapValues(bestByMessageID), fmt.Errorf("scan file: %w", err)
+		return buildFileScanResult(filePath, lineCount, mapValues(bestByMessageID)), fmt.Errorf("scan file: %w", err)
 	}
 
-	return mapValues(bestByMessageID), nil
+	return buildFileScanResult(filePath, lineCount, mapValues(bestByMessageID)), nil
 }
 
 func parseLine(line []byte) (TokenUsage, bool, bool, error) {
@@ -177,4 +203,18 @@ func mapValues(bestByMessageID map[string]TokenUsage) []TokenUsage {
 		return values[i].MessageID < values[j].MessageID
 	})
 	return values
+}
+
+func buildFileScanResult(filePath string, lineCount int, records []TokenUsage) FileScanResult {
+	lastModifiedNanos := int64(0)
+	if info, err := os.Stat(filePath); err == nil {
+		lastModifiedNanos = info.ModTime().UnixNano()
+	}
+
+	return FileScanResult{
+		FilePath:          filePath,
+		LastLineOffset:    lineCount,
+		LastModifiedNanos: lastModifiedNanos,
+		Records:           records,
+	}
 }
