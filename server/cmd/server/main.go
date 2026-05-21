@@ -19,6 +19,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("open sqlite database: %v", err)
 	}
+	if err := repository.InitializeSchema(db); err != nil {
+		log.Fatalf("initialize sqlite schema: %v", err)
+	}
 
 	sqlDB, err := db.DB()
 	if err != nil {
