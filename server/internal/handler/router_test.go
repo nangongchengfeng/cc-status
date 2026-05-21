@@ -10,7 +10,7 @@ import (
 func TestRouterExposesHealthzWithoutAuth(t *testing.T) {
 	t.Parallel()
 
-	router := NewRouter("secret-token")
+	router := NewRouter("secret-token", nil)
 	request := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	recorder := httptest.NewRecorder()
 
@@ -27,7 +27,7 @@ func TestRouterExposesHealthzWithoutAuth(t *testing.T) {
 func TestRouterProtectsAPIV1Routes(t *testing.T) {
 	t.Parallel()
 
-	router := NewRouter("secret-token")
+	router := NewRouter("secret-token", nil)
 	request := httptest.NewRequest(http.MethodGet, "/api/v1/ping", nil)
 	recorder := httptest.NewRecorder()
 

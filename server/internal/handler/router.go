@@ -9,7 +9,7 @@ import (
 )
 
 // NewRouter 构建首版 server 路由骨架。
-func NewRouter(authToken string) *gin.Engine {
+func NewRouter(authToken string, syncHandler gin.HandlerFunc) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.New()
@@ -21,6 +21,9 @@ func NewRouter(authToken string) *gin.Engine {
 
 	protected := router.Group("/api/v1")
 	protected.Use(middleware.StaticTokenAuth(authToken))
+	if syncHandler != nil {
+		protected.POST("/sync", syncHandler)
+	}
 	protected.GET("/ping", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, successData(gin.H{"message": "pong"}))
 	})

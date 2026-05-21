@@ -7,6 +7,7 @@ import (
 	"cc-status/server/internal/config"
 	"cc-status/server/internal/handler"
 	"cc-status/server/internal/repository"
+	"cc-status/server/internal/service"
 )
 
 func main() {
@@ -29,7 +30,8 @@ func main() {
 	}
 	defer sqlDB.Close()
 
-	router := handler.NewRouter(cfg.AuthToken)
+	syncHandler := handler.NewSyncHandler(service.NewSyncService(db))
+	router := handler.NewRouter(cfg.AuthToken, syncHandler.HandleSync)
 	if err := router.Run(cfg.ListenAddr); err != nil {
 		log.Fatalf("run http server: %v", err)
 	}
