@@ -21,3 +21,18 @@ type StatsClientRank struct {
 	ClientID     string `json:"client_id"`
 	TotalCostUSD string `json:"total_cost_usd"`
 }
+
+// StatsTrendQuery 表示趋势统计接口的查询参数。
+type StatsTrendQuery struct {
+	Interval string `form:"interval" binding:"required"`
+	StartAt  int64  `form:"start_at"`
+	EndAt    int64  `form:"end_at"`
+}
+
+// StatsTrendPoint 表示单个趋势桶的聚合结果。
+type StatsTrendPoint struct {
+	Bucket        string `json:"bucket"`
+	TotalTokens   int64  `json:"total_tokens"`
+	TotalRequests int64  `json:"total_requests"`
+	TotalCostUSD  string `json:"total_cost_usd"`
+}

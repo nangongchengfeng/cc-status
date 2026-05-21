@@ -4,6 +4,7 @@ import (
 	"context"
 	"math/big"
 	"sort"
+	"time"
 
 	"cc-status/server/internal/model/dto"
 	"cc-status/server/internal/model/entity"
@@ -68,6 +69,86 @@ func (service *StatsService) Overview(ctx context.Context) (dto.StatsOverviewRes
 	}, nil
 }
 
+// Trend 按指定粒度返回基于业务时间的趋势统计结果，并补零缺失时间桶。
+func (service *StatsService) Trend(
+	ctx context.Context,
+	query dto.StatsTrendQuery,
+) ([]dto.StatsTrendPoint, error) {
+	if query.Interval != "hour" && query.Interval != "day" {
+		return nil, ValidationError{message: "interval 仅支持 hour 或 day"}
+	}
+
+	location, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		return nil, err
+	}
+
+	reports, err := service.reader.List(ctx, service.db)
+	if err != nil {
+		return nil, err
+	}
+	if len(reports) == 0 {
+		return []dto.StatsTrendPoint{}, nil
+	}
+
+	startAt, endAt := resolveTrendRange(location, reports, query)
+	if startAt.After(endAt) {
+		return []dto.StatsTrendPoint{}, nil
+	}
+
+	step := time.Hour
+	if query.Interval == "day" {
+		step = 24 * time.Hour
+	}
+
+	type aggregate struct {
+		totalTokens   int64
+		totalRequests int64
+		totalCostUSD  *big.Rat
+	}
+
+	buckets := make(map[time.Time]*aggregate)
+	for _, report := range reports {
+		reportTime := time.Unix(report.CreatedAtUnix, 0).In(location)
+		if reportTime.Before(startAt) || reportTime.After(endAt.Add(step-time.Nanosecond)) {
+			continue
+		}
+
+		bucketTime := truncateTrendTime(reportTime, query.Interval)
+		if _, exists := buckets[bucketTime]; !exists {
+			buckets[bucketTime] = &aggregate{totalCostUSD: new(big.Rat)}
+		}
+
+		tokenCount := report.InputTokens + report.OutputTokens + report.CacheReadTokens + report.CacheCreationTokens
+		buckets[bucketTime].totalTokens += tokenCount
+		buckets[bucketTime].totalRequests++
+		buckets[bucketTime].totalCostUSD.Add(buckets[bucketTime].totalCostUSD, parseDecimal(report.TotalCostUSD))
+	}
+
+	points := make([]dto.StatsTrendPoint, 0)
+	for current := startAt; !current.After(endAt); current = current.Add(step) {
+		aggregateValue, exists := buckets[current]
+		if !exists {
+			points = append(points, dto.StatsTrendPoint{
+				Bucket:        current.Format(time.RFC3339),
+				TotalTokens:   0,
+				TotalRequests: 0,
+				TotalCostUSD:  "0.0000000000",
+			})
+			continue
+		}
+
+		points = append(points, dto.StatsTrendPoint{
+			Bucket:        current.Format(time.RFC3339),
+			TotalTokens:   aggregateValue.totalTokens,
+			TotalRequests: aggregateValue.totalRequests,
+			TotalCostUSD:  aggregateValue.totalCostUSD.FloatString(10),
+		})
+	}
+
+	return points, nil
+}
+
 func buildTopModels(modelTokens map[string]int64) []dto.StatsModelRank {
 	items := make([]dto.StatsModelRank, 0, len(modelTokens))
 	for model, tokens := range modelTokens {
@@ -120,4 +201,38 @@ func parseDecimal(value string) *big.Rat {
 		return new(big.Rat)
 	}
 	return decimalValue
+}
+
+func resolveTrendRange(
+	location *time.Location,
+	reports []entity.UsageReport,
+	query dto.StatsTrendQuery,
+) (time.Time, time.Time) {
+	if query.StartAt > 0 && query.EndAt > 0 {
+		startAt := truncateTrendTime(time.Unix(query.StartAt, 0).In(location), query.Interval)
+		endAt := truncateTrendTime(time.Unix(query.EndAt, 0).In(location), query.Interval)
+		return startAt, endAt
+	}
+
+	minTime := time.Unix(reports[0].CreatedAtUnix, 0).In(location)
+	maxTime := minTime
+	for _, report := range reports[1:] {
+		reportTime := time.Unix(report.CreatedAtUnix, 0).In(location)
+		if reportTime.Before(minTime) {
+			minTime = reportTime
+		}
+		if reportTime.After(maxTime) {
+			maxTime = reportTime
+		}
+	}
+
+	return truncateTrendTime(minTime, query.Interval), truncateTrendTime(maxTime, query.Interval)
+}
+
+func truncateTrendTime(value time.Time, interval string) time.Time {
+	if interval == "day" {
+		return time.Date(value.Year(), value.Month(), value.Day(), 0, 0, 0, 0, value.Location())
+	}
+
+	return time.Date(value.Year(), value.Month(), value.Day(), value.Hour(), 0, 0, 0, value.Location())
 }

@@ -13,6 +13,7 @@ import (
 // statsOverviewer 抽象总览统计接口所需的最小业务能力。
 type statsOverviewer interface {
 	Overview(context.Context) (dto.StatsOverviewResponse, error)
+	Trend(context.Context, dto.StatsTrendQuery) ([]dto.StatsTrendPoint, error)
 }
 
 // StatsHandler 负责统计接口的参数绑定与响应序列化。
@@ -41,4 +42,25 @@ func (handler *StatsHandler) HandleOverview(ctx *gin.Context) {
 		"top_models":     overview.TopModels,
 		"top_clients":    overview.TopClients,
 	}))
+}
+
+// HandleTrend 返回趋势统计结果。
+func (handler *StatsHandler) HandleTrend(ctx *gin.Context) {
+	var query dto.StatsTrendQuery
+	if err := ctx.ShouldBindQuery(&query); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorData("INVALID_REQUEST", "查询参数不合法"))
+		return
+	}
+
+	trend, err := handler.service.Trend(ctx, query)
+	if err != nil {
+		if service.IsValidationError(err) {
+			ctx.JSON(http.StatusBadRequest, errorData("INVALID_REQUEST", err.Error()))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorData("INTERNAL_ERROR", "读取趋势统计失败"))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": trend})
 }

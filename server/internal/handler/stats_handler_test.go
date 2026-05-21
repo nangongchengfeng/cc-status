@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strconv"
 	"testing"
+	"time"
 
 	"cc-status/server/internal/model/entity"
 	"cc-status/server/internal/repository"
@@ -159,6 +161,237 @@ func TestStatsOverviewRouteRequiresAuth(t *testing.T) {
 	}
 }
 
+func TestStatsTrendRouteReturnsShanghaiBucketsWithZeroFill(t *testing.T) {
+	t.Parallel()
+
+	location, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		t.Fatalf("LoadLocation() returned error: %v", err)
+	}
+
+	dbPath := filepath.Join(t.TempDir(), "server.db")
+	db, err := repository.OpenDatabase(dbPath)
+	if err != nil {
+		t.Fatalf("OpenDatabase() returned error: %v", err)
+	}
+	if err := repository.InitializeSchema(db); err != nil {
+		t.Fatalf("InitializeSchema() returned error: %v", err)
+	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("DB() returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = sqlDB.Close()
+	})
+
+	seedUsageReports(t, db, []entity.UsageReport{
+		{
+			ClientID:      "client-1",
+			RequestID:     "trend-1",
+			AppType:       "claude",
+			Model:         "alpha",
+			InputTokens:   10,
+			OutputTokens:  5,
+			PricingSource: "exact",
+			CreatedAtUnix: time.Date(2026, 5, 21, 10, 15, 0, 0, location).Unix(),
+			DataSource:    "session_log",
+			TotalCostUSD:  "1.5",
+		},
+		{
+			ClientID:      "client-2",
+			RequestID:     "trend-2",
+			AppType:       "claude",
+			Model:         "beta",
+			InputTokens:   20,
+			OutputTokens:  10,
+			PricingSource: "exact",
+			CreatedAtUnix: time.Date(2026, 5, 21, 12, 5, 0, 0, location).Unix(),
+			DataSource:    "session_log",
+			TotalCostUSD:  "2.25",
+		},
+	})
+
+	startAt := time.Date(2026, 5, 21, 10, 0, 0, 0, location).Unix()
+	endAt := time.Date(2026, 5, 21, 12, 0, 0, 0, location).Unix()
+
+	router := newTestStatsRouter(t, db)
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/api/v1/stats/trend?interval=hour&start_at="+formatUnix(startAt)+"&end_at="+formatUnix(endAt),
+		nil,
+	)
+	request.Header.Set("Authorization", "Bearer secret-token")
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+
+	var response struct {
+		Data []struct {
+			Bucket        string `json:"bucket"`
+			TotalTokens   int64  `json:"total_tokens"`
+			TotalRequests int64  `json:"total_requests"`
+			TotalCostUSD  string `json:"total_cost_usd"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Unmarshal() returned error: %v", err)
+	}
+
+	if len(response.Data) != 3 {
+		t.Fatalf("expected 3 buckets, got %d", len(response.Data))
+	}
+
+	expected := []struct {
+		bucket   string
+		tokens   int64
+		requests int64
+		cost     string
+	}{
+		{bucket: "2026-05-21T10:00:00+08:00", tokens: 15, requests: 1, cost: "1.5"},
+		{bucket: "2026-05-21T11:00:00+08:00", tokens: 0, requests: 0, cost: "0"},
+		{bucket: "2026-05-21T12:00:00+08:00", tokens: 30, requests: 1, cost: "2.25"},
+	}
+	for index, expectedItem := range expected {
+		actual := response.Data[index]
+		if actual.Bucket != expectedItem.bucket || actual.TotalTokens != expectedItem.tokens || actual.TotalRequests != expectedItem.requests {
+			t.Fatalf("unexpected trend bucket at %d: %+v", index, actual)
+		}
+		assertDecimalEqual(t, actual.TotalCostUSD, expectedItem.cost)
+	}
+}
+
+func TestStatsTrendRouteSupportsDayInterval(t *testing.T) {
+	t.Parallel()
+
+	location, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		t.Fatalf("LoadLocation() returned error: %v", err)
+	}
+
+	dbPath := filepath.Join(t.TempDir(), "server.db")
+	db, err := repository.OpenDatabase(dbPath)
+	if err != nil {
+		t.Fatalf("OpenDatabase() returned error: %v", err)
+	}
+	if err := repository.InitializeSchema(db); err != nil {
+		t.Fatalf("InitializeSchema() returned error: %v", err)
+	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("DB() returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = sqlDB.Close()
+	})
+
+	seedUsageReports(t, db, []entity.UsageReport{
+		{
+			ClientID:      "client-1",
+			RequestID:     "trend-day-1",
+			AppType:       "claude",
+			Model:         "alpha",
+			InputTokens:   8,
+			OutputTokens:  2,
+			PricingSource: "exact",
+			CreatedAtUnix: time.Date(2026, 5, 20, 9, 0, 0, 0, location).Unix(),
+			DataSource:    "session_log",
+			TotalCostUSD:  "1.2",
+		},
+		{
+			ClientID:      "client-2",
+			RequestID:     "trend-day-2",
+			AppType:       "claude",
+			Model:         "beta",
+			InputTokens:   4,
+			OutputTokens:  1,
+			PricingSource: "exact",
+			CreatedAtUnix: time.Date(2026, 5, 22, 20, 0, 0, 0, location).Unix(),
+			DataSource:    "session_log",
+			TotalCostUSD:  "0.8",
+		},
+	})
+
+	startAt := time.Date(2026, 5, 20, 0, 0, 0, 0, location).Unix()
+	endAt := time.Date(2026, 5, 22, 0, 0, 0, 0, location).Unix()
+	router := newTestStatsRouter(t, db)
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/api/v1/stats/trend?interval=day&start_at="+formatUnix(startAt)+"&end_at="+formatUnix(endAt),
+		nil,
+	)
+	request.Header.Set("Authorization", "Bearer secret-token")
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+
+	var response struct {
+		Data []struct {
+			Bucket        string `json:"bucket"`
+			TotalTokens   int64  `json:"total_tokens"`
+			TotalRequests int64  `json:"total_requests"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Unmarshal() returned error: %v", err)
+	}
+
+	if len(response.Data) != 3 {
+		t.Fatalf("expected 3 buckets, got %d", len(response.Data))
+	}
+	if response.Data[0].Bucket != "2026-05-20T00:00:00+08:00" || response.Data[0].TotalTokens != 10 {
+		t.Fatalf("unexpected first day bucket: %+v", response.Data[0])
+	}
+	if response.Data[1].Bucket != "2026-05-21T00:00:00+08:00" || response.Data[1].TotalTokens != 0 {
+		t.Fatalf("unexpected zero-filled day bucket: %+v", response.Data[1])
+	}
+	if response.Data[2].Bucket != "2026-05-22T00:00:00+08:00" || response.Data[2].TotalTokens != 5 {
+		t.Fatalf("unexpected last day bucket: %+v", response.Data[2])
+	}
+}
+
+func TestStatsTrendRouteRejectsInvalidInterval(t *testing.T) {
+	t.Parallel()
+
+	dbPath := filepath.Join(t.TempDir(), "server.db")
+	db, err := repository.OpenDatabase(dbPath)
+	if err != nil {
+		t.Fatalf("OpenDatabase() returned error: %v", err)
+	}
+	if err := repository.InitializeSchema(db); err != nil {
+		t.Fatalf("InitializeSchema() returned error: %v", err)
+	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("DB() returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = sqlDB.Close()
+	})
+
+	router := newTestStatsRouter(t, db)
+	request := httptest.NewRequest(http.MethodGet, "/api/v1/stats/trend?interval=week", nil)
+	request.Header.Set("Authorization", "Bearer secret-token")
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+}
+
 func seedUsageReports(t *testing.T, db *gorm.DB, reports []entity.UsageReport) {
 	t.Helper()
 
@@ -176,4 +409,8 @@ func newTestStatsRouter(t *testing.T, db *gorm.DB) http.Handler {
 	modelPricingHandler := NewModelPricingHandler(service.NewModelPricingService(db))
 	statsHandler := NewStatsHandler(service.NewStatsService(db))
 	return NewRouter("secret-token", syncHandler.HandleSync, modelPricingHandler, statsHandler)
+}
+
+func formatUnix(value int64) string {
+	return strconv.FormatInt(value, 10)
 }
