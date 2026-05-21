@@ -14,6 +14,7 @@ func NewRouter(
 	syncHandler gin.HandlerFunc,
 	modelPricingHandler *ModelPricingHandler,
 	statsHandler *StatsHandler,
+	logsHandler *LogsHandler,
 ) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 
@@ -37,6 +38,9 @@ func NewRouter(
 	if statsHandler != nil {
 		protected.GET("/stats/overview", statsHandler.HandleOverview)
 		protected.GET("/stats/trend", statsHandler.HandleTrend)
+	}
+	if logsHandler != nil {
+		protected.GET("/logs", logsHandler.HandleListLogs)
 	}
 	protected.GET("/ping", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, successData(gin.H{"message": "pong"}))

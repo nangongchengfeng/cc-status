@@ -33,7 +33,8 @@ func main() {
 	syncHandler := handler.NewSyncHandler(service.NewSyncService(db))
 	modelPricingHandler := handler.NewModelPricingHandler(service.NewModelPricingService(db))
 	statsHandler := handler.NewStatsHandler(service.NewStatsService(db))
-	router := handler.NewRouter(cfg.AuthToken, syncHandler.HandleSync, modelPricingHandler, statsHandler)
+	logsHandler := handler.NewLogsHandler(service.NewLogsService(db))
+	router := handler.NewRouter(cfg.AuthToken, syncHandler.HandleSync, modelPricingHandler, statsHandler, logsHandler)
 	if err := router.Run(cfg.ListenAddr); err != nil {
 		log.Fatalf("run http server: %v", err)
 	}

@@ -36,3 +36,45 @@ type StatsTrendPoint struct {
 	TotalRequests int64  `json:"total_requests"`
 	TotalCostUSD  string `json:"total_cost_usd"`
 }
+
+// LogsQuery 表示原始日志查询接口的查询参数。
+type LogsQuery struct {
+	ClientID  string `form:"client_id"`
+	Model     string `form:"model"`
+	RequestID string `form:"request_id"`
+	StartTime int64  `form:"start_time"`
+	EndTime   int64  `form:"end_time"`
+	Offset    int    `form:"offset"`
+	Limit     int    `form:"limit"`
+}
+
+// LogsItem 表示单条原始日志记录。
+type LogsItem struct {
+	ID                   uint   `json:"id"`
+	ClientID             string `json:"client_id"`
+	RequestID            string `json:"request_id"`
+	AppType              string `json:"app_type"`
+	Model                string `json:"model"`
+	InputTokens          int64  `json:"input_tokens"`
+	OutputTokens         int64  `json:"output_tokens"`
+	CacheReadTokens      int64  `json:"cache_read_tokens"`
+	CacheCreationTokens  int64  `json:"cache_creation_tokens"`
+	InputCostUSD         string `json:"input_cost_usd"`
+	OutputCostUSD        string `json:"output_cost_usd"`
+	CacheReadCostUSD     string `json:"cache_read_cost_usd"`
+	CacheCreationCostUSD string `json:"cache_creation_cost_usd"`
+	TotalCostUSD         string `json:"total_cost_usd"`
+	SessionID            string `json:"session_id"`
+	PricingSource        string `json:"pricing_source"`
+	CreatedAt            int64  `json:"created_at"`
+	DataSource           string `json:"data_source"`
+}
+
+// LogsResponse 表示原始日志查询结果。
+type LogsResponse struct {
+	Data   []LogsItem `json:"data"`
+	Total  int64      `json:"total"`
+	Offset int        `json:"offset"`
+	Limit  int        `json:"limit"`
+	Page   int        `json:"page"`
+}

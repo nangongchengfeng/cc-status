@@ -408,7 +408,7 @@ func newTestStatsRouter(t *testing.T, db *gorm.DB) http.Handler {
 	syncHandler := NewSyncHandler(service.NewSyncService(db))
 	modelPricingHandler := NewModelPricingHandler(service.NewModelPricingService(db))
 	statsHandler := NewStatsHandler(service.NewStatsService(db))
-	return NewRouter("secret-token", syncHandler.HandleSync, modelPricingHandler, statsHandler)
+	return NewRouter("secret-token", syncHandler.HandleSync, modelPricingHandler, statsHandler, nil)
 }
 
 func formatUnix(value int64) string {

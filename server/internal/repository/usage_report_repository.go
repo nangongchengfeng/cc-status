@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"strings"
 
 	"cc-status/server/internal/model/entity"
 
@@ -34,6 +35,65 @@ func (repository *UsageReportRepository) List(
 	}
 
 	return reports, nil
+}
+
+// QueryLogs 按过滤条件和分页规则查询原始使用记录。
+func (repository *UsageReportRepository) QueryLogs(
+	ctx context.Context,
+	db *gorm.DB,
+	clientID string,
+	model string,
+	requestID string,
+	startTime int64,
+	endTime int64,
+	offset int,
+	limit int,
+) ([]entity.UsageReport, int64, error) {
+	query := db.WithContext(ctx).Model(&entity.UsageReport{})
+	query = applyLogsFilters(query, clientID, model, requestID, startTime, endTime)
+
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	var reports []entity.UsageReport
+	if err := applyLogsFilters(db.WithContext(ctx).Model(&entity.UsageReport{}), clientID, model, requestID, startTime, endTime).
+		Order("created_at DESC").
+		Order("id DESC").
+		Offset(offset).
+		Limit(limit).
+		Find(&reports).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return reports, total, nil
+}
+
+func applyLogsFilters(
+	query *gorm.DB,
+	clientID string,
+	model string,
+	requestID string,
+	startTime int64,
+	endTime int64,
+) *gorm.DB {
+	if trimmed := strings.TrimSpace(clientID); trimmed != "" {
+		query = query.Where("client_id = ?", trimmed)
+	}
+	if trimmed := strings.ToLower(strings.TrimSpace(model)); trimmed != "" {
+		query = query.Where("model = ?", trimmed)
+	}
+	if trimmed := strings.TrimSpace(requestID); trimmed != "" {
+		query = query.Where("request_id = ?", trimmed)
+	}
+	if startTime > 0 {
+		query = query.Where("created_at >= ?", startTime)
+	}
+	if endTime > 0 {
+		query = query.Where("created_at <= ?", endTime)
+	}
+	return query
 }
 
 // InsertBatch 在调用方提供的事务里逐条写入，并把唯一键冲突折算为重复数。
