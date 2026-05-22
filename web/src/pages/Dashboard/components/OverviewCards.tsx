@@ -8,7 +8,7 @@ interface OverviewCardsProps {
   preset: TimeRangePreset;
 }
 
-function PrimaryMetricCard(props: { title: string; value: string; note: string; accent: string; change?: string; isPositive?: boolean; compareLabel?: string; hideArrow?: boolean; secondaryValue?: string }) {
+function PrimaryMetricCard(props: { title: string; value: string; note: string; accent: string; change?: string; isPositive?: boolean; compareLabel?: string; hideArrow?: boolean; secondaryValue?: string; unit?: string }) {
   return (
     <article
       className={[
@@ -18,7 +18,12 @@ function PrimaryMetricCard(props: { title: string; value: string; note: string; 
     >
       <div>
         <p className="text-xs uppercase tracking-[0.3em] text-[#6c92b4]">{props.title}</p>
-        <p className="mt-3 text-4xl font-semibold text-[#12304d] xl:text-[2.8rem]">{props.value}</p>
+        <div className="mt-3 flex items-baseline gap-1">
+          <p className="text-4xl font-semibold text-[#12304d] xl:text-[2.8rem]">{props.value}</p>
+          {props.unit && (
+            <p className="text-2xl font-semibold text-[#12304d] xl:text-[1.8rem]">{props.unit}</p>
+          )}
+        </div>
         {props.secondaryValue && (
           <p className="mt-1 text-sm text-[#5f7f9e]">{props.secondaryValue}</p>
         )}
@@ -87,13 +92,23 @@ function getCompareLabel(preset: TimeRangePreset): string {
 
 export function OverviewCards({ overview, previousOverview, preset }: OverviewCardsProps) {
   const totalCost = overview ? formatMetricValue(overview.totalCostUsd, 'currency') : '--';
-  const totalTokens = overview ? formatMetricValue(overview.totalTokens, 'number') : '--';
-  const totalCacheTokens = overview ? formatMetricValue(overview.totalCacheTokens, 'number') : '--';
+  const totalTokensFull = overview ? formatMetricValue(overview.totalTokens, 'number') : '--';
+  const totalCacheTokensFull = overview ? formatMetricValue(overview.totalCacheTokens, 'number') : '--';
   const totalRequests = overview ? formatMetricValue(overview.totalRequests, 'number') : '--';
   const activeClients = overview ? formatMetricValue(overview.activeClients, 'number') : '--';
 
-  const totalTokensWanYi = overview ? formatNumberInWanYi(overview.totalTokens) : null;
-  const totalCacheTokensWanYi = overview ? formatNumberInWanYi(overview.totalCacheTokens) : null;
+  // 优先用万/亿显示主数字，完整版作为辅助
+  function getDisplayValue(value: number): { main: string; unit?: string; secondary?: string } {
+    const wanYi = formatNumberInWanYi(value);
+    const full = formatMetricValue(value, 'number');
+    if (wanYi) {
+      return { main: wanYi.number, unit: wanYi.unit, secondary: full };
+    }
+    return { main: full };
+  }
+
+  const totalTokensDisplay = overview ? getDisplayValue(overview.totalTokens) : { main: '--' };
+  const totalCacheTokensDisplay = overview ? getDisplayValue(overview.totalCacheTokens) : { main: '--' };
 
   const costChange = overview && previousOverview
     ? calculateChange(parseFloat(overview.totalCostUsd), parseFloat(previousOverview.totalCostUsd))
@@ -134,8 +149,9 @@ export function OverviewCards({ overview, previousOverview, preset }: OverviewCa
       />
       <PrimaryMetricCard
         title="总 Token"
-        value={totalTokens}
-        secondaryValue={totalTokensWanYi ?? undefined}
+        value={totalTokensDisplay.main}
+        unit={totalTokensDisplay.unit}
+        secondaryValue={totalTokensDisplay.secondary}
         note="优先展示用量数据。"
         accent="bg-[linear-gradient(145deg,rgba(181,224,255,0.68),rgba(255,255,255,0.92))]"
         change={tokenChange?.change}
@@ -144,8 +160,9 @@ export function OverviewCards({ overview, previousOverview, preset }: OverviewCa
       />
       <PrimaryMetricCard
         title="总缓存"
-        value={totalCacheTokens}
-        secondaryValue={totalCacheTokensWanYi ?? undefined}
+        value={totalCacheTokensDisplay.main}
+        unit={totalCacheTokensDisplay.unit}
+        secondaryValue={totalCacheTokensDisplay.secondary}
         note="缓存 Token 统计。"
         accent="bg-[linear-gradient(145deg,rgba(134,239,172,0.35),rgba(255,255,255,0.9))]"
         change={cacheHitRate ?? undefined}
