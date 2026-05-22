@@ -63,26 +63,28 @@ export function DashboardPage() {
                 </div>
 
                 <div className="grid min-w-[280px] gap-4 sm:grid-cols-2 xl:max-w-[360px] xl:grid-cols-1">
-                  <div className="rounded-[28px] border border-white/80 bg-white/72 p-5 shadow-[0_16px_40px_rgba(112,151,194,0.16)]">
-                    <p className="text-xs uppercase tracking-[0.28em] text-[#6b93b5]">当前视图</p>
-                    <p className="mt-3 text-3xl font-semibold text-[#15324c]">{selectedRangeLabel}</p>
-                    <p className="mt-2 text-sm text-[#60809f]">切换时间范围将刷新页面数据。</p>
-                  </div>
                   <div className="rounded-[28px] border border-white/80 bg-[linear-gradient(145deg,rgba(72,150,255,0.14),rgba(255,255,255,0.86))] p-5 shadow-[0_16px_40px_rgba(112,151,194,0.16)]">
                     <p className="text-xs uppercase tracking-[0.28em] text-[#6b93b5]">状态快照</p>
                     <p className="mt-3 text-3xl font-semibold text-[#15324c]">{statusTitle}</p>
                     <p className="mt-2 text-sm text-[#60809f]">{statusNote}</p>
                   </div>
+                  <div className="rounded-[28px] border border-white/80 bg-white/72 p-5 shadow-[0_16px_40px_rgba(112,151,194,0.16)]">
+                    <p className="text-xs uppercase tracking-[0.28em] text-[#6b93b5]">当前视图</p>
+                    <p className="mt-3 text-3xl font-semibold text-[#15324c]">{selectedRangeLabel}</p>
+                    <p className="mt-2 text-sm text-[#60809f]">切换时间范围将刷新页面数据。</p>
+                  </div>
                 </div>
               </div>
 
-              <OverviewCards overview={overview} previousOverview={previousOverview} preset={preset} />
+              <div className="mt-4">
+                <OverviewCards overview={overview} previousOverview={previousOverview} preset={preset} />
+              </div>
             </div>
           </div>
         </header>
 
-        <aside className="grid gap-6 xl:col-span-4">
-          <section className="rounded-[36px] border border-white/75 bg-[linear-gradient(150deg,rgba(255,255,255,0.8),rgba(236,245,252,0.94))] p-6 shadow-[0_24px_90px_rgba(111,153,200,0.16)] backdrop-blur-xl">
+        <aside className="grid gap-4 xl:col-span-4">
+          <section className="rounded-[36px] border border-white/75 bg-[linear-gradient(150deg,rgba(255,255,255,0.8),rgba(236,245,252,0.94))] p-5 shadow-[0_24px_90px_rgba(111,153,200,0.16)] backdrop-blur-xl">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.28em] text-[#6b93b5]">时间范围</p>
@@ -113,7 +115,7 @@ export function DashboardPage() {
             </div>
           </section>
 
-          <section className="rounded-[36px] border border-white/75 bg-[linear-gradient(145deg,rgba(255,255,255,0.82),rgba(232,243,252,0.94))] p-6 shadow-[0_24px_90px_rgba(111,153,200,0.16)] backdrop-blur-xl">
+          <section className="rounded-[36px] border border-white/75 bg-[linear-gradient(145deg,rgba(255,255,255,0.82),rgba(232,243,252,0.94))] p-5 shadow-[0_24px_90px_rgba(111,153,200,0.16)] backdrop-blur-xl">
             <p className="text-xs uppercase tracking-[0.28em] text-[#6b93b5]">系统状态</p>
             <div className="mt-4 rounded-[26px] border border-white/80 bg-white/68 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
               <p className="text-xs uppercase tracking-[0.24em] text-[#6b93b5]">页面状态</p>
@@ -202,7 +204,7 @@ export function DashboardPage() {
           </div>
 
           <div className="grid min-w-0 gap-6 xl:col-span-7">
-            <section className="rounded-[36px] border border-white/75 bg-[linear-gradient(145deg,rgba(255,255,255,0.82),rgba(232,243,252,0.94))] p-6 shadow-[0_24px_90px_rgba(111,153,200,0.16)] backdrop-blur-xl">
+            <section className="rounded-[36px] border border-white/75 bg-[linear-gradient(145deg,rgba(255,255,255,0.82),rgba(232,243,252,0.94))] p-5 shadow-[0_24px_90px_rgba(111,153,200,0.16)] backdrop-blur-xl">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-3xl font-semibold text-[#12304d]">缓存效益</h2>
@@ -217,7 +219,7 @@ export function DashboardPage() {
               </div>
             </section>
 
-            <section className="rounded-[36px] border border-white/75 bg-[linear-gradient(145deg,rgba(255,255,255,0.82),rgba(232,243,252,0.94))] p-6 shadow-[0_24px_90px_rgba(111,153,200,0.16)] backdrop-blur-xl">
+            <section className="rounded-[36px] border border-white/75 bg-[linear-gradient(145deg,rgba(255,255,255,0.82),rgba(232,243,252,0.94))] p-5 shadow-[0_24px_90px_rgba(111,153,200,0.16)] backdrop-blur-xl">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-3xl font-semibold text-[#12304d]">最近请求</h2>
