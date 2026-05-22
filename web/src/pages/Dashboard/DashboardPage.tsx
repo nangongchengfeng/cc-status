@@ -126,9 +126,20 @@ export function DashboardPage() {
               </div>
               <div className="rounded-[24px] border border-white/80 bg-white/65 px-4 pt-3 pb-3">
                 <p className="text-xs uppercase tracking-[0.24em] text-[#6b93b5]">数据状态</p>
-                <p className="mt-2 text-lg font-semibold text-[#163553]">
-                  dashboard: {dashboardQuery.status} / logs: {recentLogsQuery.status}
-                </p>
+                <div className="mt-2 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${dashboardQuery.status === 'success' ? 'bg-green-500' : dashboardQuery.status === 'error' ? 'bg-red-500' : 'bg-yellow-500'}`}></span>
+                    <span className="text-sm font-medium text-[#163553]">
+                      Dashboard: <span className={`font-semibold ${dashboardQuery.status === 'success' ? 'text-green-600' : dashboardQuery.status === 'error' ? 'text-red-600' : 'text-yellow-600'}`}>{dashboardQuery.status}</span>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${recentLogsQuery.status === 'success' ? 'bg-green-500' : recentLogsQuery.status === 'error' ? 'bg-red-500' : 'bg-yellow-500'}`}></span>
+                    <span className="text-sm font-medium text-[#163553]">
+                      Logs: <span className={`font-semibold ${recentLogsQuery.status === 'success' ? 'text-green-600' : recentLogsQuery.status === 'error' ? 'text-red-600' : 'text-yellow-600'}`}>{recentLogsQuery.status}</span>
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
