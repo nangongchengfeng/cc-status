@@ -81,12 +81,100 @@ func (service *StatsService) Dashboard(
 		return dto.StatsDashboardResponse{}, ValidationError{message: "start_at 必须小于等于 end_at"}
 	}
 
-	// 首个切片先固定 dashboard 契约，后续 issue 再逐步填充真实聚合结果。
+	location, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		return dto.StatsDashboardResponse{}, err
+	}
+
+	reports, err := service.reader.List(ctx, service.db)
+	if err != nil {
+		return dto.StatsDashboardResponse{}, err
+	}
+
+	step := time.Hour
+	if query.Interval == "day" {
+		step = 24 * time.Hour
+	}
+
+	startAt := truncateTrendTime(time.Unix(query.StartAt, 0).In(location), query.Interval)
+	endAt := truncateTrendTime(time.Unix(query.EndAt, 0).In(location), query.Interval)
+	rangeEnd := endAt.Add(step - time.Nanosecond)
+
+	type dashboardAggregate struct {
+		inputTokens         int64
+		outputTokens        int64
+		cacheReadTokens     int64
+		cacheCreationTokens int64
+		totalRequests       int64
+		totalCostUSD        *big.Rat
+	}
+
+	activeClients := make(map[string]struct{})
+	buckets := make(map[time.Time]*dashboardAggregate)
+	totalCost := new(big.Rat)
+
+	var totalTokens int64
+	var totalRequests int64
+
+	for _, report := range reports {
+		reportTime := time.Unix(report.CreatedAtUnix, 0).In(location)
+		if reportTime.Before(startAt) || reportTime.After(rangeEnd) {
+			continue
+		}
+
+		tokenCount := report.InputTokens + report.OutputTokens + report.CacheReadTokens + report.CacheCreationTokens
+		totalTokens += tokenCount
+		totalRequests++
+		activeClients[report.ClientID] = struct{}{}
+		totalCost.Add(totalCost, parseDecimal(report.TotalCostUSD))
+
+		bucketTime := truncateTrendTime(reportTime, query.Interval)
+		if _, exists := buckets[bucketTime]; !exists {
+			buckets[bucketTime] = &dashboardAggregate{totalCostUSD: new(big.Rat)}
+		}
+
+		aggregate := buckets[bucketTime]
+		aggregate.inputTokens += report.InputTokens
+		aggregate.outputTokens += report.OutputTokens
+		aggregate.cacheReadTokens += report.CacheReadTokens
+		aggregate.cacheCreationTokens += report.CacheCreationTokens
+		aggregate.totalRequests++
+		aggregate.totalCostUSD.Add(aggregate.totalCostUSD, parseDecimal(report.TotalCostUSD))
+	}
+
+	trend := []dto.StatsDashboardTrendPoint{}
+	if totalRequests > 0 {
+		trend = make([]dto.StatsDashboardTrendPoint, 0)
+		for current := startAt; !current.After(endAt); current = current.Add(step) {
+			aggregate, exists := buckets[current]
+			if !exists {
+				trend = append(trend, dto.StatsDashboardTrendPoint{
+					Bucket:       current.Format(time.RFC3339),
+					TotalCostUSD: "0.0000000000",
+				})
+				continue
+			}
+
+			trend = append(trend, dto.StatsDashboardTrendPoint{
+				Bucket:              current.Format(time.RFC3339),
+				InputTokens:         aggregate.inputTokens,
+				OutputTokens:        aggregate.outputTokens,
+				CacheReadTokens:     aggregate.cacheReadTokens,
+				CacheCreationTokens: aggregate.cacheCreationTokens,
+				TotalRequests:       aggregate.totalRequests,
+				TotalCostUSD:        aggregate.totalCostUSD.FloatString(10),
+			})
+		}
+	}
+
 	return dto.StatsDashboardResponse{
 		Overview: dto.StatsDashboardOverview{
-			TotalCostUSD: "0.0000000000",
+			TotalTokens:   totalTokens,
+			TotalCostUSD:  totalCost.FloatString(10),
+			TotalRequests: totalRequests,
+			ActiveClients: int64(len(activeClients)),
 		},
-		Trend:      []dto.StatsDashboardTrendPoint{},
+		Trend:      trend,
 		TopModels:  []dto.StatsDashboardModelRank{},
 		TopClients: []dto.StatsClientRank{},
 		CacheAnalysis: dto.StatsDashboardCacheAnalysis{
