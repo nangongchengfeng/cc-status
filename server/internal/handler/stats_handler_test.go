@@ -1229,6 +1229,193 @@ func TestStatsDashboardRouteReturnsTopClientsByCost(t *testing.T) {
 	}
 }
 
+func TestStatsDashboardRouteReturnsCacheAnalysis(t *testing.T) {
+	t.Parallel()
+
+	location, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		t.Fatalf("LoadLocation() returned error: %v", err)
+	}
+
+	dbPath := filepath.Join(t.TempDir(), "server.db")
+	db, err := repository.OpenDatabase(dbPath)
+	if err != nil {
+		t.Fatalf("OpenDatabase() returned error: %v", err)
+	}
+	if err := repository.InitializeSchema(db); err != nil {
+		t.Fatalf("InitializeSchema() returned error: %v", err)
+	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("DB() returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = sqlDB.Close()
+	})
+
+	seedModelPricings(t, db, []entity.ModelPricing{
+		{
+			ModelID:                     "alpha",
+			DisplayName:                 "Alpha",
+			InputCostPerMillion:         "2",
+			OutputCostPerMillion:        "10",
+			CacheReadCostPerMillion:     "0.5",
+			CacheCreationCostPerMillion: "1",
+		},
+	})
+
+	seedUsageReports(t, db, []entity.UsageReport{
+		{
+			ClientID:             "client-1",
+			RequestID:            "cache-1",
+			AppType:              "claude",
+			Model:                "alpha",
+			InputTokens:          100,
+			OutputTokens:         10,
+			CacheReadTokens:      1000000,
+			CacheCreationTokens:  50,
+			CacheReadCostUSD:     "0.5",
+			CacheCreationCostUSD: "0.25",
+			PricingSource:        "exact",
+			CreatedAtUnix:        time.Date(2026, 5, 21, 10, 0, 0, 0, location).Unix(),
+			DataSource:           "session_log",
+			TotalCostUSD:         "2",
+		},
+		{
+			ClientID:             "client-2",
+			RequestID:            "cache-2",
+			AppType:              "claude",
+			Model:                "alpha",
+			InputTokens:          50,
+			OutputTokens:         5,
+			CacheReadTokens:      0,
+			CacheCreationTokens:  20,
+			CacheReadCostUSD:     "0",
+			CacheCreationCostUSD: "0.4",
+			PricingSource:        "exact",
+			CreatedAtUnix:        time.Date(2026, 5, 21, 11, 0, 0, 0, location).Unix(),
+			DataSource:           "session_log",
+			TotalCostUSD:         "1",
+		},
+	})
+
+	startAt := time.Date(2026, 5, 21, 10, 0, 0, 0, location).Unix()
+	endAt := time.Date(2026, 5, 21, 11, 0, 0, 0, location).Unix()
+
+	router := newTestStatsRouter(t, db)
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/api/v1/stats/dashboard?interval=hour&start_at="+formatUnix(startAt)+"&end_at="+formatUnix(endAt),
+		nil,
+	)
+	request.Header.Set("Authorization", "Bearer secret-token")
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+
+	var response struct {
+		Data struct {
+			CacheAnalysis struct {
+				SavedCostUSD         string `json:"saved_cost_usd"`
+				CacheReadCostUSD     string `json:"cache_read_cost_usd"`
+				CacheCreationCostUSD string `json:"cache_creation_cost_usd"`
+			} `json:"cache_analysis"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Unmarshal() returned error: %v", err)
+	}
+
+	assertDecimalEqual(t, response.Data.CacheAnalysis.SavedCostUSD, "1.5")
+	assertDecimalEqual(t, response.Data.CacheAnalysis.CacheReadCostUSD, "0.5")
+	assertDecimalEqual(t, response.Data.CacheAnalysis.CacheCreationCostUSD, "0.65")
+}
+
+func TestStatsDashboardRouteReturnsZeroSavedCostWithoutCacheRead(t *testing.T) {
+	t.Parallel()
+
+	location, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		t.Fatalf("LoadLocation() returned error: %v", err)
+	}
+
+	dbPath := filepath.Join(t.TempDir(), "server.db")
+	db, err := repository.OpenDatabase(dbPath)
+	if err != nil {
+		t.Fatalf("OpenDatabase() returned error: %v", err)
+	}
+	if err := repository.InitializeSchema(db); err != nil {
+		t.Fatalf("InitializeSchema() returned error: %v", err)
+	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("DB() returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = sqlDB.Close()
+	})
+
+	seedUsageReports(t, db, []entity.UsageReport{
+		{
+			ClientID:             "client-1",
+			RequestID:            "cache-zero-1",
+			AppType:              "claude",
+			Model:                "alpha",
+			InputTokens:          50,
+			OutputTokens:         5,
+			CacheReadTokens:      0,
+			CacheCreationTokens:  30,
+			CacheReadCostUSD:     "0",
+			CacheCreationCostUSD: "0.2",
+			PricingSource:        "exact",
+			CreatedAtUnix:        time.Date(2026, 5, 21, 10, 0, 0, 0, location).Unix(),
+			DataSource:           "session_log",
+			TotalCostUSD:         "1",
+		},
+	})
+
+	startAt := time.Date(2026, 5, 21, 10, 0, 0, 0, location).Unix()
+	endAt := time.Date(2026, 5, 21, 10, 0, 0, 0, location).Unix()
+
+	router := newTestStatsRouter(t, db)
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/api/v1/stats/dashboard?interval=hour&start_at="+formatUnix(startAt)+"&end_at="+formatUnix(endAt),
+		nil,
+	)
+	request.Header.Set("Authorization", "Bearer secret-token")
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+
+	var response struct {
+		Data struct {
+			CacheAnalysis struct {
+				SavedCostUSD         string `json:"saved_cost_usd"`
+				CacheReadCostUSD     string `json:"cache_read_cost_usd"`
+				CacheCreationCostUSD string `json:"cache_creation_cost_usd"`
+			} `json:"cache_analysis"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Unmarshal() returned error: %v", err)
+	}
+
+	assertDecimalEqual(t, response.Data.CacheAnalysis.SavedCostUSD, "0")
+	assertDecimalEqual(t, response.Data.CacheAnalysis.CacheReadCostUSD, "0")
+	assertDecimalEqual(t, response.Data.CacheAnalysis.CacheCreationCostUSD, "0.2")
+}
+
 func seedUsageReports(t *testing.T, db *gorm.DB, reports []entity.UsageReport) {
 	t.Helper()
 

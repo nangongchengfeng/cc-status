@@ -125,6 +125,9 @@ func (service *StatsService) Dashboard(
 	buckets := make(map[time.Time]*dashboardAggregate)
 	clientCosts := make(map[string]*big.Rat)
 	modelTokens := make(map[string]int64)
+	cacheReadCost := new(big.Rat)
+	cacheCreationCost := new(big.Rat)
+	savedCost := new(big.Rat)
 	totalCost := new(big.Rat)
 
 	var totalTokens int64
@@ -147,6 +150,11 @@ func (service *StatsService) Dashboard(
 			clientCosts[report.ClientID] = new(big.Rat)
 		}
 		clientCosts[report.ClientID].Add(clientCosts[report.ClientID], reportCost)
+
+		reportCacheReadCost := parseDecimal(report.CacheReadCostUSD)
+		reportCacheCreationCost := parseDecimal(report.CacheCreationCostUSD)
+		cacheReadCost.Add(cacheReadCost, reportCacheReadCost)
+		cacheCreationCost.Add(cacheCreationCost, reportCacheCreationCost)
 
 		bucketTime := truncateTrendTime(reportTime, query.Interval)
 		if _, exists := buckets[bucketTime]; !exists {
@@ -194,6 +202,25 @@ func (service *StatsService) Dashboard(
 
 	topModels := buildDashboardTopModels(modelTokens, displayNames)
 	topClients := buildTopClients(clientCosts)
+	for _, report := range reports {
+		reportTime := time.Unix(report.CreatedAtUnix, 0).In(location)
+		if reportTime.Before(startAt) || reportTime.After(rangeEnd) {
+			continue
+		}
+
+		if report.CacheReadTokens == 0 {
+			continue
+		}
+
+		inputCostPerMillion := resolveDashboardInputCost(report.Model, pricings)
+		theoreticalCost := new(big.Rat).Mul(
+			new(big.Rat).SetInt64(report.CacheReadTokens),
+			inputCostPerMillion,
+		)
+		theoreticalCost.Quo(theoreticalCost, big.NewRat(1000000, 1))
+		theoreticalCost.Sub(theoreticalCost, parseDecimal(report.CacheReadCostUSD))
+		savedCost.Add(savedCost, theoreticalCost)
+	}
 
 	return dto.StatsDashboardResponse{
 		Overview: dto.StatsDashboardOverview{
@@ -206,9 +233,9 @@ func (service *StatsService) Dashboard(
 		TopModels:  topModels,
 		TopClients: topClients,
 		CacheAnalysis: dto.StatsDashboardCacheAnalysis{
-			SavedCostUSD:         "0.0000000000",
-			CacheReadCostUSD:     "0.0000000000",
-			CacheCreationCostUSD: "0.0000000000",
+			SavedCostUSD:         savedCost.FloatString(10),
+			CacheReadCostUSD:     cacheReadCost.FloatString(10),
+			CacheCreationCostUSD: cacheCreationCost.FloatString(10),
 		},
 	}, nil
 }
@@ -237,6 +264,36 @@ func buildDashboardTopModels(
 		return items[:10]
 	}
 	return items
+}
+
+func resolveDashboardInputCost(model string, pricings []entity.ModelPricing) *big.Rat {
+	normalizedModel := strings.ToLower(model)
+	placeholder := ""
+	longestPrefixLength := -1
+	longestPrefixCost := ""
+
+	for _, pricing := range pricings {
+		modelID := strings.ToLower(pricing.ModelID)
+		if pricing.IsPlaceholder {
+			placeholder = pricing.InputCostPerMillion
+			continue
+		}
+		if modelID == normalizedModel {
+			return parseDecimal(pricing.InputCostPerMillion)
+		}
+		if strings.HasPrefix(normalizedModel, modelID) && len(modelID) > longestPrefixLength {
+			longestPrefixLength = len(modelID)
+			longestPrefixCost = pricing.InputCostPerMillion
+		}
+	}
+
+	if longestPrefixCost != "" {
+		return parseDecimal(longestPrefixCost)
+	}
+	if placeholder != "" {
+		return parseDecimal(placeholder)
+	}
+	return new(big.Rat)
 }
 
 // Trend 按指定粒度返回基于业务时间的趋势统计结果，并补零缺失时间桶。
