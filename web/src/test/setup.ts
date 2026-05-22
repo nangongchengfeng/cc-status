@@ -1,1 +1,17 @@
-﻿import '@testing-library/jest-dom';
+import '@testing-library/jest-dom';
+
+class MockResizeObserver {
+  observe() {}
+
+  unobserve() {}
+
+  disconnect() {}
+}
+
+if (typeof globalThis.ResizeObserver === 'undefined') {
+  Object.defineProperty(globalThis, 'ResizeObserver', {
+    writable: true,
+    configurable: true,
+    value: MockResizeObserver,
+  });
+}

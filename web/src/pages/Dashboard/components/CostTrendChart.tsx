@@ -1,6 +1,7 @@
 import type { DashboardInterval, DashboardTrendPoint } from '@/types/dashboard';
+import { ChartViewport } from '@/pages/Dashboard/components/ChartViewport';
 import { formatBucketLabel, formatMetricValue } from '@/utils/format';
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from 'recharts';
 
 interface CostTrendChartProps {
   trend: DashboardTrendPoint[];
@@ -9,24 +10,55 @@ interface CostTrendChartProps {
 
 export function CostTrendChart({ trend, interval }: CostTrendChartProps) {
   if (trend.length === 0) {
-    return <div className="grid h-[280px] place-items-center rounded-[24px] border border-dashed border-white/15 bg-white/[0.03] text-sm text-[#cab99d]">这段时间还没花钱。</div>;
+    return (
+      <div className="grid h-[300px] place-items-center rounded-[28px] border border-dashed border-[#cfe0f1] bg-[linear-gradient(145deg,rgba(255,255,255,0.72),rgba(232,243,252,0.72))] text-sm text-[#6a86a3]">
+        这段时间还没花钱。
+      </div>
+    );
   }
 
   return (
-    <div className="h-[280px] rounded-[24px] border border-white/10 bg-black/10 p-4">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={trend}>
-          <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
-          <XAxis dataKey="bucket" tickFormatter={(value) => formatBucketLabel(value, interval)} stroke="#d4c5a8" tickLine={false} axisLine={false} />
-          <YAxis stroke="#d4c5a8" tickFormatter={(value) => `$${value}`} tickLine={false} axisLine={false} width={56} />
+    <div className="h-[300px] min-w-0 rounded-[28px] border border-white/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.8),rgba(237,246,252,0.96))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]">
+      <ChartViewport>
+        {({ width, height }) => (
+        <LineChart width={width} height={height} data={trend}>
+          <CartesianGrid stroke="rgba(120,155,193,0.18)" vertical={false} />
+          <XAxis
+            dataKey="bucket"
+            tickFormatter={(value) => formatBucketLabel(value, interval)}
+            stroke="#7191b0"
+            tickLine={false}
+            axisLine={false}
+          />
+          <YAxis
+            stroke="#7191b0"
+            tickFormatter={(value) => `$${value}`}
+            tickLine={false}
+            axisLine={false}
+            width={56}
+          />
           <Tooltip
-            contentStyle={{ background: '#161515', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', color: '#fff7ea' }}
+            contentStyle={{
+              background: 'rgba(245, 250, 255, 0.96)',
+              border: '1px solid rgba(138, 176, 214, 0.36)',
+              borderRadius: '18px',
+              color: '#17324b',
+              boxShadow: '0 18px 42px rgba(104, 153, 204, 0.18)',
+            }}
             formatter={(value) => formatMetricValue(String(value ?? 0), 'currency')}
             labelFormatter={(label) => formatBucketLabel(label, interval)}
           />
-          <Line type="monotone" dataKey="totalCostUsd" stroke="#e49a61" strokeWidth={3} dot={false} />
+          <Line
+            type="monotone"
+            dataKey="totalCostUsd"
+            stroke="#3f8cff"
+            strokeWidth={3}
+            dot={false}
+            activeDot={{ r: 4, strokeWidth: 0, fill: '#1f74ff' }}
+          />
         </LineChart>
-      </ResponsiveContainer>
+        )}
+      </ChartViewport>
     </div>
   );
 }

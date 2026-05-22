@@ -1,4 +1,4 @@
-﻿import { formatMetricValue } from '@/utils/format';
+import { formatMetricValue } from '@/utils/format';
 
 interface OverviewCardsProps {
   overview?: {
@@ -9,39 +9,55 @@ interface OverviewCardsProps {
   };
 }
 
-function OverviewCard(props: { title: string; value: string; note: string }) {
+function PrimaryMetricCard(props: { title: string; value: string; note: string; accent: string }) {
   return (
-    <article className="rounded-[28px] border border-white/10 bg-[linear-gradient(155deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-sm">
-      <p className="text-xs uppercase tracking-[0.28em] text-[#d9cdb8]/60">{props.title}</p>
-      <p className="mt-3 text-3xl font-semibold text-[#f7f2e8]">{props.value}</p>
-      <p className="mt-2 text-sm text-[#cbbda5]/72">{props.note}</p>
+    <article
+      className={[
+        'overflow-hidden rounded-[32px] border border-white/80 p-6 shadow-[0_22px_60px_rgba(111,153,200,0.16)] backdrop-blur-xl',
+        props.accent,
+      ].join(' ')}
+    >
+      <p className="text-xs uppercase tracking-[0.3em] text-[#6c92b4]">{props.title}</p>
+      <p className="mt-4 text-4xl font-semibold text-[#12304d] xl:text-[2.8rem]">{props.value}</p>
+      <p className="mt-3 text-sm text-[#5f7f9e]">{props.note}</p>
+    </article>
+  );
+}
+
+function SecondaryMetricCard(props: { title: string; value: string; note: string }) {
+  return (
+    <article className="rounded-[28px] border border-white/80 bg-white/72 p-5 shadow-[0_18px_48px_rgba(111,153,200,0.14)] backdrop-blur-xl">
+      <p className="text-xs uppercase tracking-[0.28em] text-[#6c92b4]">{props.title}</p>
+      <p className="mt-3 text-3xl font-semibold text-[#12304d]">{props.value}</p>
+      <p className="mt-2 text-sm text-[#5f7f9e]">{props.note}</p>
     </article>
   );
 }
 
 export function OverviewCards({ overview }: OverviewCardsProps) {
+  const totalCost = overview ? formatMetricValue(overview.totalCostUsd, 'currency') : '--';
+  const totalTokens = overview ? formatMetricValue(overview.totalTokens, 'number') : '--';
+  const totalRequests = overview ? formatMetricValue(overview.totalRequests, 'number') : '--';
+  const activeClients = overview ? formatMetricValue(overview.activeClients, 'number') : '--';
+
   return (
-    <section className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
-      <OverviewCard
-        title="总 Token"
-        value={overview ? formatMetricValue(overview.totalTokens, 'number') : '--'}
-        note="把消耗先看透。"
-      />
-      <OverviewCard
+    <section className="grid gap-4 xl:grid-cols-[1.28fr_1fr_0.9fr]">
+      <PrimaryMetricCard
         title="总费用"
-        value={overview ? formatMetricValue(overview.totalCostUsd, 'currency') : '--'}
-        note="钱花在哪，一眼看见。"
+        value={totalCost}
+        note="费用是主线。"
+        accent="bg-[linear-gradient(145deg,rgba(91,178,255,0.18),rgba(255,255,255,0.88))]"
       />
-      <OverviewCard
-        title="总请求数"
-        value={overview ? formatMetricValue(overview.totalRequests, 'number') : '--'}
-        note="请求热度先立住。"
+      <PrimaryMetricCard
+        title="总 Token"
+        value={totalTokens}
+        note="先看量，再看因。"
+        accent="bg-[linear-gradient(145deg,rgba(181,224,255,0.68),rgba(255,255,255,0.92))]"
       />
-      <OverviewCard
-        title="活跃客户端"
-        value={overview ? formatMetricValue(overview.activeClients, 'number') : '--'}
-        note="谁在跑，一目了然。"
-      />
+      <div className="grid gap-4">
+        <SecondaryMetricCard title="总请求数" value={totalRequests} note="热度先站住。" />
+        <SecondaryMetricCard title="活跃客户端" value={activeClients} note="谁在跑，看这里。" />
+      </div>
     </section>
   );
 }

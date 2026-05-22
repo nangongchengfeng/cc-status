@@ -1,6 +1,7 @@
-﻿import type { DashboardInterval, DashboardTrendPoint } from '@/types/dashboard';
+import type { DashboardInterval, DashboardTrendPoint } from '@/types/dashboard';
+import { ChartViewport } from '@/pages/Dashboard/components/ChartViewport';
 import { formatBucketLabel } from '@/utils/format';
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, CartesianGrid, Tooltip, XAxis, YAxis } from 'recharts';
 
 interface TokenTrendChartProps {
   trend: DashboardTrendPoint[];
@@ -9,26 +10,44 @@ interface TokenTrendChartProps {
 
 export function TokenTrendChart({ trend, interval }: TokenTrendChartProps) {
   if (trend.length === 0) {
-    return <div className="grid h-[280px] place-items-center rounded-[24px] border border-dashed border-white/15 bg-white/[0.03] text-sm text-[#cab99d]">还没有 token 趋势。</div>;
+    return (
+      <div className="grid h-[300px] place-items-center rounded-[28px] border border-dashed border-[#cfe0f1] bg-[linear-gradient(145deg,rgba(255,255,255,0.72),rgba(232,243,252,0.72))] text-sm text-[#6a86a3]">
+        还没有 token 趋势。
+      </div>
+    );
   }
 
   return (
-    <div className="h-[280px] rounded-[24px] border border-white/10 bg-black/10 p-4">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={trend}>
-          <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
-          <XAxis dataKey="bucket" tickFormatter={(value) => formatBucketLabel(value, interval)} stroke="#d4c5a8" tickLine={false} axisLine={false} />
-          <YAxis stroke="#d4c5a8" tickLine={false} axisLine={false} width={56} />
+    <div className="h-[300px] min-w-0 rounded-[28px] border border-white/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.8),rgba(237,246,252,0.96))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]">
+      <ChartViewport>
+        {({ width, height }) => (
+        <AreaChart width={width} height={height} data={trend}>
+          <CartesianGrid stroke="rgba(120,155,193,0.18)" vertical={false} />
+          <XAxis
+            dataKey="bucket"
+            tickFormatter={(value) => formatBucketLabel(value, interval)}
+            stroke="#7191b0"
+            tickLine={false}
+            axisLine={false}
+          />
+          <YAxis stroke="#7191b0" tickLine={false} axisLine={false} width={56} />
           <Tooltip
-            contentStyle={{ background: '#161515', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', color: '#fff7ea' }}
+            contentStyle={{
+              background: 'rgba(245, 250, 255, 0.96)',
+              border: '1px solid rgba(138, 176, 214, 0.36)',
+              borderRadius: '18px',
+              color: '#17324b',
+              boxShadow: '0 18px 42px rgba(104, 153, 204, 0.18)',
+            }}
             labelFormatter={(label) => formatBucketLabel(label, interval)}
           />
-          <Area type="monotone" dataKey="inputTokens" stackId="tokens" stroke="#d49a4e" fill="#d49a4e" fillOpacity={0.7} />
-          <Area type="monotone" dataKey="outputTokens" stackId="tokens" stroke="#63b59c" fill="#63b59c" fillOpacity={0.65} />
-          <Area type="monotone" dataKey="cacheReadTokens" stackId="tokens" stroke="#d85f4d" fill="#d85f4d" fillOpacity={0.55} />
-          <Area type="monotone" dataKey="cacheCreationTokens" stackId="tokens" stroke="#a78a6f" fill="#a78a6f" fillOpacity={0.45} />
+          <Area type="monotone" dataKey="inputTokens" stackId="tokens" stroke="#3f8cff" fill="#7cc7ff" fillOpacity={0.65} />
+          <Area type="monotone" dataKey="outputTokens" stackId="tokens" stroke="#61a9ff" fill="#5c9bff" fillOpacity={0.58} />
+          <Area type="monotone" dataKey="cacheReadTokens" stackId="tokens" stroke="#57c3ca" fill="#67d4d7" fillOpacity={0.5} />
+          <Area type="monotone" dataKey="cacheCreationTokens" stackId="tokens" stroke="#8aaeff" fill="#9fbfff" fillOpacity={0.44} />
         </AreaChart>
-      </ResponsiveContainer>
+        )}
+      </ChartViewport>
     </div>
   );
 }
