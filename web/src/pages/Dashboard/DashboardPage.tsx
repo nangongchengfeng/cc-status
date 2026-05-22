@@ -1,7 +1,9 @@
 ﻿import { TIME_RANGE_OPTIONS } from '@/constants/timeRanges';
 import { useDashboardQuery } from '@/hooks/useDashboardQuery';
 import { useRecentLogsQuery } from '@/hooks/useRecentLogsQuery';
+import { ClientRanking } from '@/pages/Dashboard/components/ClientRanking';
 import { CostTrendChart } from '@/pages/Dashboard/components/CostTrendChart';
+import { ModelRanking } from '@/pages/Dashboard/components/ModelRanking';
 import { OverviewCards } from '@/pages/Dashboard/components/OverviewCards';
 import { TokenTrendChart } from '@/pages/Dashboard/components/TokenTrendChart';
 import { buildQueryTimeRange, getDashboardIntervalLabel, type TimeRangePreset } from '@/utils/timeRange';
@@ -97,6 +99,32 @@ export function DashboardPage() {
               </div>
             </section>
           </section>
+
+          <section className="grid gap-6 2xl:grid-cols-[1fr_1fr]">
+            <section className="rounded-[32px] border border-white/10 bg-black/20 p-6 backdrop-blur-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-semibold text-[#fff5e6]">模型排行</h2>
+                  <p className="mt-2 text-sm text-[#c9b89c]">TOP 10 模型，谁最忙一眼看见。</p>
+                </div>
+              </div>
+              <div className="mt-6">
+                <ModelRanking items={dashboardQuery.data?.topModels ?? []} />
+              </div>
+            </section>
+
+            <section className="rounded-[32px] border border-white/10 bg-black/20 p-6 backdrop-blur-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-semibold text-[#fff5e6]">客户端排行</h2>
+                  <p className="mt-2 text-sm text-[#c9b89c]">TOP 10 客户端，谁最烧钱马上知道。</p>
+                </div>
+              </div>
+              <div className="mt-6">
+                <ClientRanking items={dashboardQuery.data?.topClients ?? []} />
+              </div>
+            </section>
+          </section>
         </section>
 
         <aside className="grid gap-6">
@@ -108,7 +136,7 @@ export function DashboardPage() {
           </section>
           <section className="rounded-[32px] border border-white/10 bg-black/20 p-6 backdrop-blur-sm">
             <h2 className="text-2xl font-semibold text-[#fff5e6]">视图提示</h2>
-            <p className="mt-3 text-sm leading-7 text-[#cab99d]">现在卡片和趋势已经共用一套 query 口径。</p>
+            <p className="mt-3 text-sm leading-7 text-[#cab99d]">现在卡片、趋势和排行已经共用一套 query 口径。</p>
           </section>
         </aside>
       </div>

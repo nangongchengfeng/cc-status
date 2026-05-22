@@ -22,3 +22,7 @@ export function formatBucketLabel(bucket: string, interval: DashboardInterval) {
   const hour = `${date.getHours()}`.padStart(2, '0');
   return `${month}-${day} ${hour}:00`;
 }
+
+export function getModelDisplayName(model: { displayName?: string; model: string }) {
+  return model.displayName?.trim() ? model.displayName : model.model;
+}
