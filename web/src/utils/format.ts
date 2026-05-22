@@ -44,3 +44,11 @@ export function formatRecentRequestTime(createdAt: number) {
 
   return `${valueByType.year}-${valueByType.month}-${valueByType.day} ${valueByType.hour}:${valueByType.minute}`;
 }
+
+export function truncateLabel(value: string, maxLength = 16) {
+  if (value.length <= maxLength) {
+    return value;
+  }
+
+  return `${value.slice(0, Math.max(1, maxLength - 1))}…`;
+}

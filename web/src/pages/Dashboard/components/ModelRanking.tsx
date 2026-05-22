@@ -1,5 +1,5 @@
-﻿import type { DashboardTopModel } from '@/types/dashboard';
-import { formatMetricValue, getModelDisplayName } from '@/utils/format';
+import type { DashboardTopModel } from '@/types/dashboard';
+import { formatMetricValue, getModelDisplayName, truncateLabel } from '@/utils/format';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 interface ModelRankingProps {
@@ -22,7 +22,7 @@ export function ModelRanking({ items }: ModelRankingProps) {
         <BarChart data={data} layout="vertical" margin={{ left: 8, right: 8 }}>
           <CartesianGrid stroke="rgba(255,255,255,0.06)" horizontal={false} />
           <XAxis type="number" stroke="#d4c5a8" tickLine={false} axisLine={false} />
-          <YAxis dataKey="name" type="category" stroke="#d4c5a8" tickLine={false} axisLine={false} width={118} />
+          <YAxis dataKey="name" type="category" stroke="#d4c5a8" tickFormatter={(value) => truncateLabel(String(value), 14)} tickLine={false} axisLine={false} width={118} />
           <Tooltip
             contentStyle={{ background: '#161515', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', color: '#fff7ea' }}
             formatter={(value) => formatMetricValue(Number(value ?? 0), 'number')}

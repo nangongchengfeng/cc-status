@@ -1,5 +1,5 @@
 import type { RecentLogItem } from '@/types/logs';
-import { formatMetricValue, formatRecentRequestTime } from '@/utils/format';
+import { formatMetricValue, formatRecentRequestTime, truncateLabel } from '@/utils/format';
 
 interface RecentRequestsTableProps {
   items: RecentLogItem[];
@@ -29,7 +29,7 @@ export function RecentRequestsTable({ items }: RecentRequestsTableProps) {
               <td className="whitespace-nowrap px-4 py-3 text-[#d8ccb8]">{formatRecentRequestTime(item.createdAt)}</td>
               <td className="max-w-[240px] px-4 py-3">
                 <span className="block truncate" title={item.model}>
-                  {item.model}
+                  {truncateLabel(item.model, 24)}
                 </span>
               </td>
               <td className="whitespace-nowrap px-4 py-3">{formatMetricValue(item.inputTokens, 'number')}</td>
@@ -37,7 +37,7 @@ export function RecentRequestsTable({ items }: RecentRequestsTableProps) {
               <td className="whitespace-nowrap px-4 py-3 text-[#63b59c]">{formatMetricValue(item.totalCostUsd, 'currency')}</td>
               <td className="max-w-[220px] px-4 py-3">
                 <span className="block truncate text-[#d8ccb8]" title={item.clientId}>
-                  {item.clientId}
+                  {truncateLabel(item.clientId, 20)}
                 </span>
               </td>
             </tr>

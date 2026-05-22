@@ -22,12 +22,13 @@ export function DashboardPage() {
   });
 
   const hasError = dashboardQuery.isError || recentLogsQuery.isError;
+  const isLoading = dashboardQuery.isPending || recentLogsQuery.isPending;
   const trend = dashboardQuery.data?.trend ?? [];
   const cacheAnalysis = dashboardQuery.data?.cacheAnalysis;
   const recentLogs = recentLogsQuery.data?.data ?? [];
 
   return (
-    <main className="min-h-screen px-6 py-8 text-[#f7f2e8]">
+    <main aria-busy={isLoading} className="min-h-screen px-6 py-8 text-[#f7f2e8]">
       <div className="mx-auto grid max-w-[1680px] gap-6 xl:grid-cols-[1.45fr_0.85fr]">
         <section className="space-y-6">
           <header className="rounded-[36px] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] p-8 shadow-[0_25px_90px_rgba(0,0,0,0.32)] backdrop-blur-md">
@@ -66,6 +67,12 @@ export function DashboardPage() {
             {hasError ? (
               <div className="mt-5 rounded-2xl border border-[#d36b4b]/40 bg-[#41261f]/60 px-4 py-3 text-sm text-[#ffd5c7]">
                 数据暂时没接上，但页面状态是稳的。
+              </div>
+            ) : null}
+
+            {isLoading ? (
+              <div className="mt-5 rounded-2xl border border-[#d8a978]/30 bg-[#2f241a]/60 px-4 py-3 text-sm text-[#ffe4c1]">
+                数据加载中，正在刷新当前时间范围。
               </div>
             ) : null}
           </header>

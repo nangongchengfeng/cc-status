@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatBucketLabel, formatMetricValue, formatRecentRequestTime, getModelDisplayName } from '@/utils/format';
+import { formatBucketLabel, formatMetricValue, formatRecentRequestTime, getModelDisplayName, truncateLabel } from '@/utils/format';
 
 describe('format helpers', () => {
   it('格式化金额与大数字卡片值', () => {
@@ -20,5 +20,10 @@ describe('format helpers', () => {
 
   it('最近请求时间统一格式化为上海时区', () => {
     expect(formatRecentRequestTime(1747879200)).toBe('2025-05-22 10:00');
+  });
+
+  it('长标签会被统一截断，避免撑坏布局', () => {
+    expect(truncateLabel('short-label')).toBe('short-label');
+    expect(truncateLabel('claude-super-long-model-name', 12)).toBe('claude-supe…');
   });
 });
