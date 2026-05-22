@@ -1,5 +1,6 @@
-import { formatMetricValue } from '@/utils/format';
+import { formatMetricValue, formatBucketLabel } from '@/utils/format';
 import type { DashboardTrendPoint } from '@/types/dashboard';
+import type { DashboardInterval } from '@/types/dashboard';
 
 interface OverviewCardsProps {
   overview?: {
@@ -9,9 +10,10 @@ interface OverviewCardsProps {
     activeClients: number;
   };
   trend?: DashboardTrendPoint[];
+  interval?: DashboardInterval;
 }
 
-function PrimaryMetricCard(props: { title: string; value: string; note: string; accent: string; change?: string; isPositive?: boolean }) {
+function PrimaryMetricCard(props: { title: string; value: string; note: string; accent: string; change?: string; isPositive?: boolean; compareLabel?: string }) {
   return (
     <article
       className={[
@@ -21,29 +23,39 @@ function PrimaryMetricCard(props: { title: string; value: string; note: string; 
     >
       <p className="text-xs uppercase tracking-[0.3em] text-[#6c92b4]">{props.title}</p>
       <p className="mt-4 text-4xl font-semibold text-[#12304d] xl:text-[2.8rem]">{props.value}</p>
-      <div className="mt-3 flex items-center gap-2">
+      <div className="mt-3 flex items-center gap-2 flex-wrap">
         <p className="text-sm text-[#5f7f9e]">{props.note}</p>
         {props.change && (
-          <span className={`text-sm font-medium ${props.isPositive ? 'text-[#16a34a]' : 'text-[#dc2626]'}`}>
-            {props.isPositive ? '↑' : '↓'} {props.change}
-          </span>
+          <>
+            <span className={`text-sm font-medium ${props.isPositive ? 'text-[#16a34a]' : 'text-[#dc2626]'}`}>
+              {props.isPositive ? '↑' : '↓'} {props.change}
+            </span>
+            {props.compareLabel && (
+              <span className="text-xs text-[#8ba5bf]">{props.compareLabel}</span>
+            )}
+          </>
         )}
       </div>
     </article>
   );
 }
 
-function SecondaryMetricCard(props: { title: string; value: string; note: string; change?: string; isPositive?: boolean }) {
+function SecondaryMetricCard(props: { title: string; value: string; note: string; change?: string; isPositive?: boolean; compareLabel?: string }) {
   return (
     <article className="rounded-[28px] border border-white/80 bg-white/72 p-5 shadow-[0_18px_48px_rgba(111,153,200,0.14)] backdrop-blur-xl">
       <p className="text-xs uppercase tracking-[0.28em] text-[#6c92b4]">{props.title}</p>
       <p className="mt-3 text-3xl font-semibold text-[#12304d]">{props.value}</p>
-      <div className="mt-2 flex items-center gap-2">
+      <div className="mt-2 flex items-center gap-2 flex-wrap">
         <p className="text-sm text-[#5f7f9e]">{props.note}</p>
         {props.change && (
-          <span className={`text-sm font-medium ${props.isPositive ? 'text-[#16a34a]' : 'text-[#dc2626]'}`}>
-            {props.isPositive ? '↑' : '↓'} {props.change}
-          </span>
+          <>
+            <span className={`text-sm font-medium ${props.isPositive ? 'text-[#16a34a]' : 'text-[#dc2626]'}`}>
+              {props.isPositive ? '↑' : '↓'} {props.change}
+            </span>
+            {props.compareLabel && (
+              <span className="text-xs text-[#8ba5bf]">{props.compareLabel}</span>
+            )}
+          </>
         )}
       </div>
     </article>
@@ -57,7 +69,7 @@ function calculateChange(current: number, previous: number): { change: string; i
   return { change, isPositive: diff > 0 };
 }
 
-export function OverviewCards({ overview, trend }: OverviewCardsProps) {
+export function OverviewCards({ overview, trend, interval }: OverviewCardsProps) {
   const totalCost = overview ? formatMetricValue(overview.totalCostUsd, 'currency') : '--';
   const totalTokens = overview ? formatMetricValue(overview.totalTokens, 'number') : '--';
   const totalRequests = overview ? formatMetricValue(overview.totalRequests, 'number') : '--';
@@ -85,6 +97,14 @@ export function OverviewCards({ overview, trend }: OverviewCardsProps) {
   const tokenIsPositive = tokenChange ? !tokenChange.isPositive : undefined;
   const requestIsPositive = requestChange ? !requestChange.isPositive : undefined;
 
+  // 生成对比标签
+  let compareLabel: string | undefined;
+  if (yesterday && today && interval) {
+    const yesterdayLabel = formatBucketLabel(yesterday.bucket, interval);
+    const todayLabel = formatBucketLabel(today.bucket, interval);
+    compareLabel = `${yesterdayLabel} → ${todayLabel}`;
+  }
+
   return (
     <section className="grid gap-4 xl:grid-cols-[1.28fr_1fr_0.9fr]">
       <PrimaryMetricCard
@@ -94,6 +114,7 @@ export function OverviewCards({ overview, trend }: OverviewCardsProps) {
         accent="bg-[linear-gradient(145deg,rgba(91,178,255,0.18),rgba(255,255,255,0.88))]"
         change={costChange?.change}
         isPositive={costIsPositive}
+        compareLabel={compareLabel}
       />
       <PrimaryMetricCard
         title="总 Token"
@@ -102,6 +123,7 @@ export function OverviewCards({ overview, trend }: OverviewCardsProps) {
         accent="bg-[linear-gradient(145deg,rgba(181,224,255,0.68),rgba(255,255,255,0.92))]"
         change={tokenChange?.change}
         isPositive={tokenIsPositive}
+        compareLabel={compareLabel}
       />
       <div className="grid gap-4">
         <SecondaryMetricCard
@@ -110,6 +132,7 @@ export function OverviewCards({ overview, trend }: OverviewCardsProps) {
           note="请求总数统计。"
           change={requestChange?.change}
           isPositive={requestIsPositive}
+          compareLabel={compareLabel}
         />
         <SecondaryMetricCard title="活跃客户端" value={activeClients} note="活跃客户端数量。" />
       </div>

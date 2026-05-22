@@ -74,7 +74,7 @@ export function DashboardPage() {
                 </div>
               </div>
 
-              <OverviewCards overview={dashboardQuery.data?.overview} trend={trend} />
+              <OverviewCards overview={dashboardQuery.data?.overview} trend={trend} interval={queryRange.interval} />
             </div>
           </div>
         </header>
