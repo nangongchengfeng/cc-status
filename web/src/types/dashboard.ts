@@ -42,6 +42,7 @@ export interface DashboardCacheAnalysis {
 
 export interface DashboardResponse {
   overview: DashboardOverview;
+  previousOverview: DashboardOverview;
   trend: DashboardTrendPoint[];
   topModels: DashboardTopModel[];
   topClients: DashboardTopClient[];

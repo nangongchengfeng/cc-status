@@ -112,6 +112,12 @@ func (service *StatsService) Dashboard(
 	endAt := truncateTrendTime(time.Unix(query.EndAt, 0).In(location), query.Interval)
 	rangeEnd := endAt.Add(step - time.Nanosecond)
 
+	// 计算前一个周期的时间范围
+	rangeDuration := endAt.Sub(startAt) + step
+	previousStartAt := startAt.Add(-rangeDuration)
+	previousEndAt := startAt.Add(-time.Nanosecond)
+	previousRangeEnd := previousEndAt
+
 	type dashboardAggregate struct {
 		inputTokens         int64
 		outputTokens        int64
@@ -133,41 +139,57 @@ func (service *StatsService) Dashboard(
 	var totalTokens int64
 	var totalRequests int64
 
+	// 前一个周期的数据
+	previousActiveClients := make(map[string]struct{})
+	var previousTotalTokens int64
+	var previousTotalRequests int64
+	previousTotalCost := new(big.Rat)
+
 	for _, report := range reports {
 		reportTime := time.Unix(report.CreatedAtUnix, 0).In(location)
-		if reportTime.Before(startAt) || reportTime.After(rangeEnd) {
-			continue
+
+		// 处理当前周期数据
+		if !reportTime.Before(startAt) && !reportTime.After(rangeEnd) {
+			tokenCount := report.InputTokens + report.OutputTokens + report.CacheReadTokens + report.CacheCreationTokens
+			totalTokens += tokenCount
+			totalRequests++
+			activeClients[report.ClientID] = struct{}{}
+			modelTokens[report.Model] += tokenCount
+			reportCost := parseDecimal(report.TotalCostUSD)
+			totalCost.Add(totalCost, reportCost)
+			if _, exists := clientCosts[report.ClientID]; !exists {
+				clientCosts[report.ClientID] = new(big.Rat)
+			}
+			clientCosts[report.ClientID].Add(clientCosts[report.ClientID], reportCost)
+
+			reportCacheReadCost := parseDecimal(report.CacheReadCostUSD)
+			reportCacheCreationCost := parseDecimal(report.CacheCreationCostUSD)
+			cacheReadCost.Add(cacheReadCost, reportCacheReadCost)
+			cacheCreationCost.Add(cacheCreationCost, reportCacheCreationCost)
+
+			bucketTime := truncateTrendTime(reportTime, query.Interval)
+			if _, exists := buckets[bucketTime]; !exists {
+				buckets[bucketTime] = &dashboardAggregate{totalCostUSD: new(big.Rat)}
+			}
+
+			aggregate := buckets[bucketTime]
+			aggregate.inputTokens += report.InputTokens
+			aggregate.outputTokens += report.OutputTokens
+			aggregate.cacheReadTokens += report.CacheReadTokens
+			aggregate.cacheCreationTokens += report.CacheCreationTokens
+			aggregate.totalRequests++
+			aggregate.totalCostUSD.Add(aggregate.totalCostUSD, parseDecimal(report.TotalCostUSD))
 		}
 
-		tokenCount := report.InputTokens + report.OutputTokens + report.CacheReadTokens + report.CacheCreationTokens
-		totalTokens += tokenCount
-		totalRequests++
-		activeClients[report.ClientID] = struct{}{}
-		modelTokens[report.Model] += tokenCount
-		reportCost := parseDecimal(report.TotalCostUSD)
-		totalCost.Add(totalCost, reportCost)
-		if _, exists := clientCosts[report.ClientID]; !exists {
-			clientCosts[report.ClientID] = new(big.Rat)
+		// 处理前一个周期数据
+		if !reportTime.Before(previousStartAt) && !reportTime.After(previousRangeEnd) {
+			tokenCount := report.InputTokens + report.OutputTokens + report.CacheReadTokens + report.CacheCreationTokens
+			previousTotalTokens += tokenCount
+			previousTotalRequests++
+			previousActiveClients[report.ClientID] = struct{}{}
+			reportCost := parseDecimal(report.TotalCostUSD)
+			previousTotalCost.Add(previousTotalCost, reportCost)
 		}
-		clientCosts[report.ClientID].Add(clientCosts[report.ClientID], reportCost)
-
-		reportCacheReadCost := parseDecimal(report.CacheReadCostUSD)
-		reportCacheCreationCost := parseDecimal(report.CacheCreationCostUSD)
-		cacheReadCost.Add(cacheReadCost, reportCacheReadCost)
-		cacheCreationCost.Add(cacheCreationCost, reportCacheCreationCost)
-
-		bucketTime := truncateTrendTime(reportTime, query.Interval)
-		if _, exists := buckets[bucketTime]; !exists {
-			buckets[bucketTime] = &dashboardAggregate{totalCostUSD: new(big.Rat)}
-		}
-
-		aggregate := buckets[bucketTime]
-		aggregate.inputTokens += report.InputTokens
-		aggregate.outputTokens += report.OutputTokens
-		aggregate.cacheReadTokens += report.CacheReadTokens
-		aggregate.cacheCreationTokens += report.CacheCreationTokens
-		aggregate.totalRequests++
-		aggregate.totalCostUSD.Add(aggregate.totalCostUSD, parseDecimal(report.TotalCostUSD))
 	}
 
 	trend := []dto.StatsDashboardTrendPoint{}
@@ -228,6 +250,12 @@ func (service *StatsService) Dashboard(
 			TotalCostUSD:  totalCost.FloatString(10),
 			TotalRequests: totalRequests,
 			ActiveClients: int64(len(activeClients)),
+		},
+		PreviousOverview: dto.StatsDashboardOverview{
+			TotalTokens:   previousTotalTokens,
+			TotalCostUSD:  previousTotalCost.FloatString(10),
+			TotalRequests: previousTotalRequests,
+			ActiveClients: int64(len(previousActiveClients)),
 		},
 		Trend:      trend,
 		TopModels:  topModels,

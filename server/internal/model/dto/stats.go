@@ -46,11 +46,12 @@ type StatsTrendPoint struct {
 
 // StatsDashboardResponse 表示仪表盘统计接口的响应体。
 type StatsDashboardResponse struct {
-	Overview      StatsDashboardOverview      `json:"overview"`
-	Trend         []StatsDashboardTrendPoint  `json:"trend"`
-	TopModels     []StatsDashboardModelRank   `json:"top_models"`
-	TopClients    []StatsClientRank           `json:"top_clients"`
-	CacheAnalysis StatsDashboardCacheAnalysis `json:"cache_analysis"`
+	Overview         StatsDashboardOverview      `json:"overview"`
+	PreviousOverview StatsDashboardOverview      `json:"previous_overview"`
+	Trend            []StatsDashboardTrendPoint  `json:"trend"`
+	TopModels        []StatsDashboardModelRank   `json:"top_models"`
+	TopClients       []StatsClientRank           `json:"top_clients"`
+	CacheAnalysis    StatsDashboardCacheAnalysis `json:"cache_analysis"`
 }
 
 // StatsDashboardOverview 表示仪表盘总览卡片数据。

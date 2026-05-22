@@ -32,6 +32,8 @@ export function DashboardPage() {
   const selectedRangeLabel = TIME_RANGE_OPTIONS.find((option) => option.value === preset)?.label ?? '最近 7 天';
   const statusTitle = hasError ? '数据异常' : isLoading ? '加载中' : '数据就绪';
   const statusNote = hasError ? '页面框架保持稳定。' : isLoading ? '数据正在加载中。' : '数据已准备就绪。';
+  const overview = dashboardQuery.data?.overview;
+  const previousOverview = dashboardQuery.data?.previousOverview;
 
   return (
     <main aria-busy={isLoading} className="min-h-screen px-6 py-6 text-[#18324a]">
@@ -74,7 +76,7 @@ export function DashboardPage() {
                 </div>
               </div>
 
-              <OverviewCards overview={dashboardQuery.data?.overview} trend={trend} interval={queryRange.interval} />
+              <OverviewCards overview={overview} previousOverview={previousOverview} />
             </div>
           </div>
         </header>
