@@ -1,18 +1,11 @@
 ﻿import { TIME_RANGE_OPTIONS } from '@/constants/timeRanges';
 import { useDashboardQuery } from '@/hooks/useDashboardQuery';
 import { useRecentLogsQuery } from '@/hooks/useRecentLogsQuery';
+import { CostTrendChart } from '@/pages/Dashboard/components/CostTrendChart';
+import { OverviewCards } from '@/pages/Dashboard/components/OverviewCards';
+import { TokenTrendChart } from '@/pages/Dashboard/components/TokenTrendChart';
 import { buildQueryTimeRange, getDashboardIntervalLabel, type TimeRangePreset } from '@/utils/timeRange';
 import { useMemo, useState } from 'react';
-
-function MetricCard(props: { title: string; value: string; note: string }) {
-  return (
-    <article className="rounded-[28px] border border-white/10 bg-black/20 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.25)] backdrop-blur-sm">
-      <p className="text-xs uppercase tracking-[0.28em] text-[#d9cdb8]/60">{props.title}</p>
-      <p className="mt-3 text-3xl font-semibold text-[#f7f2e8]">{props.value}</p>
-      <p className="mt-2 text-sm text-[#cbbda5]/72">{props.note}</p>
-    </article>
-  );
-}
 
 export function DashboardPage() {
   const [preset, setPreset] = useState<TimeRangePreset>('last7Days');
@@ -25,6 +18,7 @@ export function DashboardPage() {
   });
 
   const hasError = dashboardQuery.isError || recentLogsQuery.isError;
+  const trend = dashboardQuery.data?.trend ?? [];
 
   return (
     <main className="min-h-screen px-6 py-8 text-[#f7f2e8]">
@@ -70,24 +64,38 @@ export function DashboardPage() {
             ) : null}
           </header>
 
-          <section className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
-            <MetricCard title="总 Token" value="--" note="等数据接进来" />
-            <MetricCard title="总费用" value="--" note="别急，还没连后端" />
-            <MetricCard title="总请求数" value="--" note="先把骨架立住" />
-            <MetricCard title="活跃客户端" value="--" note="后面一起刷新" />
-          </section>
+          <OverviewCards overview={dashboardQuery.data?.overview} />
 
-          <section className="rounded-[32px] border border-white/10 bg-black/20 p-6 backdrop-blur-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-semibold text-[#fff5e6]">主图区域</h2>
-                <p className="mt-2 text-sm text-[#c9b89c]">这里先占坑，下一刀接趋势图。</p>
+          <section className="grid gap-6 2xl:grid-cols-[1.1fr_1fr]">
+            <section className="rounded-[32px] border border-white/10 bg-black/20 p-6 backdrop-blur-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-semibold text-[#fff5e6]">费用趋势</h2>
+                  <p className="mt-2 text-sm text-[#c9b89c]">共享时间轴，先看钱线怎么走。</p>
+                </div>
+                <div className="rounded-full border border-[#d8a978]/30 px-4 py-2 text-xs uppercase tracking-[0.25em] text-[#d8a978]">
+                  cost trend
+                </div>
               </div>
-              <div className="rounded-full border border-[#d8a978]/30 px-4 py-2 text-xs uppercase tracking-[0.25em] text-[#d8a978]">
-                issue 02
+              <div className="mt-6">
+                <CostTrendChart trend={trend} interval={queryRange.interval} />
               </div>
-            </div>
-            <div className="mt-6 h-[280px] rounded-[24px] border border-dashed border-white/15 bg-white/[0.03]" />
+            </section>
+
+            <section className="rounded-[32px] border border-white/10 bg-black/20 p-6 backdrop-blur-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-semibold text-[#fff5e6]">Token 细分</h2>
+                  <p className="mt-2 text-sm text-[#c9b89c]">输入、输出、缓存，一根轴看完。</p>
+                </div>
+                <div className="rounded-full border border-[#63b59c]/30 px-4 py-2 text-xs uppercase tracking-[0.25em] text-[#63b59c]">
+                  token trend
+                </div>
+              </div>
+              <div className="mt-6">
+                <TokenTrendChart trend={trend} interval={queryRange.interval} />
+              </div>
+            </section>
           </section>
         </section>
 
@@ -99,8 +107,8 @@ export function DashboardPage() {
             </p>
           </section>
           <section className="rounded-[32px] border border-white/10 bg-black/20 p-6 backdrop-blur-sm">
-            <h2 className="text-2xl font-semibold text-[#fff5e6]">卡片容器</h2>
-            <p className="mt-3 text-sm leading-7 text-[#cab99d]">先把参数和请求走通，再慢慢塞图表。</p>
+            <h2 className="text-2xl font-semibold text-[#fff5e6]">视图提示</h2>
+            <p className="mt-3 text-sm leading-7 text-[#cab99d]">现在卡片和趋势已经共用一套 query 口径。</p>
           </section>
         </aside>
       </div>
