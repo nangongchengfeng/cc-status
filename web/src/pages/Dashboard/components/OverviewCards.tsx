@@ -80,6 +80,12 @@ export function OverviewCards({ overview, trend }: OverviewCardsProps) {
     ? calculateChange(today.totalRequests, yesterday.totalRequests)
     : null;
 
+  // 费用：下降是好事（绿色），增长是坏事（红色）
+  // Token/请求：增长是好事（绿色），下降是坏事（红色）
+  const costIsPositive = costChange ? !costChange.isPositive : undefined;
+  const tokenIsPositive = tokenChange?.isPositive;
+  const requestIsPositive = requestChange?.isPositive;
+
   return (
     <section className="grid gap-4 xl:grid-cols-[1.28fr_1fr_0.9fr]">
       <PrimaryMetricCard
@@ -88,7 +94,7 @@ export function OverviewCards({ overview, trend }: OverviewCardsProps) {
         note="费用为核心指标。"
         accent="bg-[linear-gradient(145deg,rgba(91,178,255,0.18),rgba(255,255,255,0.88))]"
         change={costChange?.change}
-        isPositive={costChange?.isPositive}
+        isPositive={costIsPositive}
       />
       <PrimaryMetricCard
         title="总 Token"
@@ -96,7 +102,7 @@ export function OverviewCards({ overview, trend }: OverviewCardsProps) {
         note="优先展示用量数据。"
         accent="bg-[linear-gradient(145deg,rgba(181,224,255,0.68),rgba(255,255,255,0.92))]"
         change={tokenChange?.change}
-        isPositive={tokenChange?.isPositive}
+        isPositive={tokenIsPositive}
       />
       <div className="grid gap-4">
         <SecondaryMetricCard
@@ -104,7 +110,7 @@ export function OverviewCards({ overview, trend }: OverviewCardsProps) {
           value={totalRequests}
           note="请求总数统计。"
           change={requestChange?.change}
-          isPositive={requestChange?.isPositive}
+          isPositive={requestIsPositive}
         />
         <SecondaryMetricCard title="活跃客户端" value={activeClients} note="活跃客户端数量。" />
       </div>
