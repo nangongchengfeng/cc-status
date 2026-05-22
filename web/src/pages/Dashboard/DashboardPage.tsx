@@ -10,6 +10,7 @@ import { ModelRanking } from '@/pages/Dashboard/components/ModelRanking';
 import { OverviewCards } from '@/pages/Dashboard/components/OverviewCards';
 import { RecentRequestsTable } from '@/pages/Dashboard/components/RecentRequestsTable';
 import { TokenTrendChart } from '@/pages/Dashboard/components/TokenTrendChart';
+import { formatUnixTimestamp } from '@/utils/format';
 import { buildQueryTimeRange, getDashboardIntervalLabel, type TimeRangePreset } from '@/utils/timeRange';
 
 export function DashboardPage() {
@@ -84,7 +85,7 @@ export function DashboardPage() {
               <div>
                 <p className="text-xs uppercase tracking-[0.28em] text-[#6b93b5]">时间范围</p>
                 <h2 className="mt-3 text-2xl font-semibold text-[#12304d]">切一下，整页都变</h2>
-                <p className="mt-2 text-sm leading-7 text-[#5d7f9d]">起点 {queryRange.startAt}</p>
+                <p className="mt-2 text-sm leading-7 text-[#5d7f9d]">起点 {formatUnixTimestamp(queryRange.startAt)}</p>
               </div>
               <div className="rounded-full border border-[#d6e5f4] bg-white/70 px-4 py-2 text-xs uppercase tracking-[0.28em] text-[#4e88bb]">
                 {intervalLabel}

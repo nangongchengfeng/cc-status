@@ -1,6 +1,6 @@
 import type { DashboardInterval, DashboardTrendPoint } from '@/types/dashboard';
 import { ChartViewport } from '@/pages/Dashboard/components/ChartViewport';
-import { formatBucketLabel } from '@/utils/format';
+import { formatBucketLabel, formatLargeNumber, formatMetricValue } from '@/utils/format';
 import { Area, AreaChart, CartesianGrid, Tooltip, XAxis, YAxis } from 'recharts';
 
 interface TokenTrendChartProps {
@@ -30,7 +30,7 @@ export function TokenTrendChart({ trend, interval }: TokenTrendChartProps) {
             tickLine={false}
             axisLine={false}
           />
-          <YAxis stroke="#7191b0" tickLine={false} axisLine={false} width={56} />
+          <YAxis stroke="#7191b0" tickFormatter={(value) => formatLargeNumber(Number(value))} tickLine={false} axisLine={false} width={56} />
           <Tooltip
             contentStyle={{
               background: 'rgba(245, 250, 255, 0.96)',
@@ -39,6 +39,7 @@ export function TokenTrendChart({ trend, interval }: TokenTrendChartProps) {
               color: '#17324b',
               boxShadow: '0 18px 42px rgba(104, 153, 204, 0.18)',
             }}
+            formatter={(value) => formatMetricValue(Number(value ?? 0), 'number')}
             labelFormatter={(label) => formatBucketLabel(label, interval)}
           />
           <Area type="monotone" dataKey="inputTokens" stackId="tokens" stroke="#3f8cff" fill="#7cc7ff" fillOpacity={0.65} />

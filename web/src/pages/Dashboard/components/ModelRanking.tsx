@@ -28,7 +28,7 @@ export function ModelRanking({ items }: ModelRankingProps) {
         <BarChart width={width} height={height} data={data} layout="vertical" margin={{ left: 8, right: 8 }}>
           <CartesianGrid stroke="rgba(120,155,193,0.18)" horizontal={false} />
           <XAxis type="number" stroke="#7191b0" tickLine={false} axisLine={false} />
-          <YAxis dataKey="name" type="category" stroke="#7191b0" tickFormatter={(value) => truncateLabel(String(value), 14)} tickLine={false} axisLine={false} width={118} />
+          <YAxis dataKey="name" type="category" stroke="#7191b0" tickFormatter={(value) => truncateLabel(String(value), 24)} tickLine={false} axisLine={false} width={180} />
           <Tooltip
             contentStyle={{
               background: 'rgba(245, 250, 255, 0.96)',
