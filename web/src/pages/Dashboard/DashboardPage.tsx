@@ -98,11 +98,6 @@ export function DashboardPage() {
 
           <section className="rounded-[36px] border border-white/75 bg-[linear-gradient(145deg,rgba(255,255,255,0.82),rgba(232,243,252,0.94))] px-5 pt-5 pb-4 shadow-[0_24px_90px_rgba(111,153,200,0.16)] backdrop-blur-xl">
             <p className="text-xs uppercase tracking-[0.28em] text-[#6b93b5]">系统状态</p>
-            <div className="mt-4 rounded-[26px] border border-white/80 bg-white/68 px-5 pt-4 pb-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
-              <p className="text-xs uppercase tracking-[0.24em] text-[#6b93b5]">页面状态</p>
-              <p className="mt-3 text-3xl font-semibold text-[#15324c]">{statusTitle}</p>
-              <p className="mt-2 text-sm text-[#60809f]">{statusNote}</p>
-            </div>
 
             {hasError ? (
               <div className="mt-4 rounded-[24px] border border-[#f0c2b7] bg-[linear-gradient(145deg,rgba(255,255,255,0.8),rgba(255,235,230,0.9))] px-4 py-3 text-sm text-[#9b4c3b]">

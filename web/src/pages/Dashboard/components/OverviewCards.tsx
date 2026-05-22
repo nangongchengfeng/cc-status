@@ -46,27 +46,29 @@ function PrimaryMetricCard(props: { title: string; value: string; note: string; 
   );
 }
 
-function SmallMetricCard(props: { title: string; value: string; note: string; change?: string; isPositive?: boolean; compareLabel?: string; secondaryValue?: string; unit?: string; accent?: string }) {
+function SmallMetricCard(props: { title: string; value: string; note: string; change?: string; isPositive?: boolean; compareLabel?: string; secondaryValue?: string; unit?: string; accent?: string; compact?: boolean }) {
   return (
     <article className={[
-        'rounded-[28px] border border-white/80 bg-white/72 px-4 pt-3 pb-4 shadow-[0_18px_48px_rgba(111,153,200,0.14)] backdrop-blur-xl flex flex-col justify-between',
+        props.compact
+          ? 'rounded-[20px] border border-white/80 bg-white/72 px-3 pt-2 pb-3 shadow-[0_12px_32px_rgba(111,153,200,0.14)] backdrop-blur-xl flex flex-col justify-between'
+          : 'rounded-[28px] border border-white/80 bg-white/72 px-4 pt-3 pb-4 shadow-[0_18px_48px_rgba(111,153,200,0.14)] backdrop-blur-xl flex flex-col justify-between',
         props.accent,
       ].join(' ')}
     >
       <div>
-        <p className="text-xs uppercase tracking-[0.28em] text-[#6c92b4]">{props.title}</p>
-        <div className="mt-2 flex items-baseline gap-1">
-          <p className="text-3xl font-semibold text-[#12304d]">{props.value}</p>
+        <p className={props.compact ? 'text-[10px] uppercase tracking-[0.24em] text-[#6c92b4]' : 'text-xs uppercase tracking-[0.28em] text-[#6c92b4]'}>{props.title}</p>
+        <div className="mt-1 flex items-baseline gap-1">
+          <p className={props.compact ? 'text-2xl font-semibold text-[#12304d]' : 'text-3xl font-semibold text-[#12304d]'}>{props.value}</p>
           {props.unit && (
-            <p className="text-xl font-semibold text-[#12304d]">{props.unit}</p>
+            <p className={props.compact ? 'text-lg font-semibold text-[#12304d]' : 'text-xl font-semibold text-[#12304d]'}>{props.unit}</p>
           )}
         </div>
         {props.secondaryValue && (
           <p className="mt-1 text-xs text-[#5f7f9e]">{props.secondaryValue}</p>
         )}
       </div>
-      <div className="mt-3">
-        <p className="text-sm text-[#5f7f9e]">{props.note}</p>
+      <div className="mt-2">
+        <p className={props.compact ? 'text-xs text-[#5f7f9e]' : 'text-sm text-[#5f7f9e]'}>{props.note}</p>
         {props.change && props.compareLabel && (
           <div className="mt-1">
             <p className="text-xs text-[#8ba5bf]">{props.compareLabel}</p>
@@ -80,16 +82,20 @@ function SmallMetricCard(props: { title: string; value: string; note: string; ch
   );
 }
 
-function InfoCard(props: { title: string; value: string; note: string; accent?: string }) {
+function InfoCard(props: { title: string; value: string; note: string; accent?: string; compact?: boolean; extraCompact?: boolean }) {
   return (
     <article className={[
-        'rounded-[28px] border border-white/80 bg-white/72 px-4 pt-3 pb-4 shadow-[0_16px_40px_rgba(112,151,194,0.16)] backdrop-blur-xl flex flex-col justify-between',
+        props.extraCompact
+          ? 'rounded-[20px] border border-white/80 bg-white/72 px-3 py-2 shadow-[0_12px_32px_rgba(112,151,194,0.16)] backdrop-blur-xl'
+          : props.compact
+          ? 'rounded-[20px] border border-white/80 bg-white/72 px-3 pt-2 pb-3 shadow-[0_12px_32px_rgba(112,151,194,0.16)] backdrop-blur-xl flex flex-col justify-between'
+          : 'rounded-[28px] border border-white/80 bg-white/72 px-4 pt-3 pb-4 shadow-[0_16px_40px_rgba(112,151,194,0.16)] backdrop-blur-xl flex flex-col justify-between',
         props.accent,
       ].join(' ')}
     >
-      <p className="text-xs uppercase tracking-[0.28em] text-[#6b93b5]">{props.title}</p>
-      <p className="mt-2 text-3xl font-semibold text-[#15324c]">{props.value}</p>
-      <p className="mt-2 text-sm text-[#60809f]">{props.note}</p>
+      <p className={props.extraCompact ? 'text-[10px] uppercase tracking-[0.24em] text-[#6b93b5]' : props.compact ? 'text-[10px] uppercase tracking-[0.24em] text-[#6b93b5]' : 'text-xs uppercase tracking-[0.28em] text-[#6b93b5]'}>{props.title}</p>
+      <p className={props.extraCompact ? 'mt-1 text-lg font-semibold text-[#15324c]' : props.compact ? 'mt-1 text-2xl font-semibold text-[#15324c]' : 'mt-2 text-3xl font-semibold text-[#15324c]'}>{props.value}</p>
+      <p className={props.extraCompact ? 'mt-1 text-xs text-[#60809f]' : props.compact ? 'mt-1 text-xs text-[#60809f]' : 'mt-2 text-sm text-[#60809f]'}>{props.note}</p>
     </article>
   );
 }
@@ -139,7 +145,7 @@ function calculateCacheHitRate(cacheRead: number, input: number): string | null 
 
 export function OverviewTopCards({ overview, previousOverview, preset, selectedRangeLabel, statusTitle, statusNote }: OverviewCardsProps) {
   return (
-    <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+    <div className="grid gap-4 xl:grid-cols-[1fr_1fr] items-end">
       {/* 左侧标题区域 */}
       <div className="flex flex-col justify-center">
         <div className="inline-flex items-center rounded-full border border-[#cfe0f0] bg-white/55 px-4 py-2 text-xs uppercase tracking-[0.32em] text-[#4f86b7] w-fit">
@@ -163,11 +169,13 @@ export function OverviewTopCards({ overview, previousOverview, preset, selectedR
       {/* 右侧 2x1 卡片网格 */}
       <div className="grid grid-cols-2 gap-4">
         <InfoCard
+          extraCompact
           title="当前视图"
           value={selectedRangeLabel}
           note="切换时间范围将刷新页面数据。"
         />
         <InfoCard
+          extraCompact
           title="状态快照"
           value={statusTitle}
           note={statusNote}
@@ -281,6 +289,7 @@ export function OverviewMainCards({ overview, previousOverview, preset }: Overvi
       />
       <div className="grid gap-4">
         <SmallMetricCard
+          compact
           title="输入 Token"
           value={inputTokensDisplay.main}
           unit={inputTokensDisplay.unit}
@@ -291,6 +300,7 @@ export function OverviewMainCards({ overview, previousOverview, preset }: Overvi
           compareLabel={inputChange ? compareLabel : undefined}
         />
         <SmallMetricCard
+          compact
           title="输出 Token"
           value={outputTokensDisplay.main}
           unit={outputTokensDisplay.unit}
