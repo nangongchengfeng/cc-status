@@ -123,6 +123,7 @@ func (service *StatsService) Dashboard(
 
 	activeClients := make(map[string]struct{})
 	buckets := make(map[time.Time]*dashboardAggregate)
+	clientCosts := make(map[string]*big.Rat)
 	modelTokens := make(map[string]int64)
 	totalCost := new(big.Rat)
 
@@ -140,7 +141,12 @@ func (service *StatsService) Dashboard(
 		totalRequests++
 		activeClients[report.ClientID] = struct{}{}
 		modelTokens[report.Model] += tokenCount
-		totalCost.Add(totalCost, parseDecimal(report.TotalCostUSD))
+		reportCost := parseDecimal(report.TotalCostUSD)
+		totalCost.Add(totalCost, reportCost)
+		if _, exists := clientCosts[report.ClientID]; !exists {
+			clientCosts[report.ClientID] = new(big.Rat)
+		}
+		clientCosts[report.ClientID].Add(clientCosts[report.ClientID], reportCost)
 
 		bucketTime := truncateTrendTime(reportTime, query.Interval)
 		if _, exists := buckets[bucketTime]; !exists {
@@ -187,6 +193,7 @@ func (service *StatsService) Dashboard(
 	}
 
 	topModels := buildDashboardTopModels(modelTokens, displayNames)
+	topClients := buildTopClients(clientCosts)
 
 	return dto.StatsDashboardResponse{
 		Overview: dto.StatsDashboardOverview{
@@ -197,7 +204,7 @@ func (service *StatsService) Dashboard(
 		},
 		Trend:      trend,
 		TopModels:  topModels,
-		TopClients: []dto.StatsClientRank{},
+		TopClients: topClients,
 		CacheAnalysis: dto.StatsDashboardCacheAnalysis{
 			SavedCostUSD:         "0.0000000000",
 			CacheReadCostUSD:     "0.0000000000",
