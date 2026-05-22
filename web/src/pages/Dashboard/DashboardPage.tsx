@@ -7,7 +7,7 @@ import { CacheAnalysis } from '@/pages/Dashboard/components/CacheAnalysis';
 import { ClientRanking } from '@/pages/Dashboard/components/ClientRanking';
 import { CostTrendChart } from '@/pages/Dashboard/components/CostTrendChart';
 import { ModelRanking } from '@/pages/Dashboard/components/ModelRanking';
-import { OverviewCards } from '@/pages/Dashboard/components/OverviewCards';
+import { OverviewMainCards, OverviewTopCards } from '@/pages/Dashboard/components/OverviewCards';
 import { RecentRequestsTable } from '@/pages/Dashboard/components/RecentRequestsTable';
 import { TokenTrendChart } from '@/pages/Dashboard/components/TokenTrendChart';
 import { formatUnixTimestamp } from '@/utils/format';
@@ -42,41 +42,24 @@ export function DashboardPage() {
           <div className="relative">
             <div className="pointer-events-none absolute inset-x-0 top-0 h-44 rounded-full bg-[radial-gradient(circle,rgba(102,187,255,0.22),transparent_68%)] blur-3xl" />
             <div className="relative flex flex-col gap-8">
-              <div className="flex flex-wrap items-start justify-between gap-6">
-                <div className="max-w-3xl">
-                  <div className="inline-flex items-center rounded-full border border-[#cfe0f0] bg-white/55 px-4 py-2 text-xs uppercase tracking-[0.32em] text-[#4f86b7]">
-                    Claude Usage Deck
-                  </div>
-                  <h1 className="mt-6 text-5xl font-semibold leading-[1.05] text-[#12304d] xl:text-6xl">Claude 用量监控</h1>
-                  <p className="mt-4 max-w-2xl text-lg leading-8 text-[#52718f]">优先展示费用数据，其次为使用来源。</p>
-                  <div className="mt-6 flex flex-wrap gap-3 text-sm text-[#3f6180]">
-                    <span className="rounded-full border border-[#d6e6f4] bg-white/70 px-4 py-2 shadow-[0_12px_30px_rgba(124,164,208,0.12)]">
-                      当前按{intervalLabel}粒度观察
-                    </span>
-                    <span className="rounded-full border border-[#d6e6f4] bg-white/70 px-4 py-2 shadow-[0_12px_30px_rgba(124,164,208,0.12)]">
-                      范围：{selectedRangeLabel}
-                    </span>
-                    <span className="rounded-full border border-[#c9ddf4] bg-[linear-gradient(135deg,rgba(90,177,255,0.15),rgba(255,255,255,0.78))] px-4 py-2 text-[#1d5f92] shadow-[0_12px_30px_rgba(124,164,208,0.12)]">
-                      费用数据为页面核心指标。
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid min-w-[280px] gap-4 sm:grid-cols-2 xl:max-w-[360px] xl:grid-cols-1">
-                  <div className="rounded-[28px] border border-white/80 bg-white/72 px-4 pt-3 pb-4 shadow-[0_16px_40px_rgba(112,151,194,0.16)]">
-                    <p className="text-xs uppercase tracking-[0.28em] text-[#6b93b5]">当前视图</p>
-                    <p className="mt-2 text-3xl font-semibold text-[#15324c]">{selectedRangeLabel}</p>
-                    <p className="mt-2 text-sm text-[#60809f]">切换时间范围将刷新页面数据。</p>
-                  </div>
-                  <div className="rounded-[28px] border border-white/80 bg-[linear-gradient(145deg,rgba(72,150,255,0.14),rgba(255,255,255,0.86))] px-4 pt-3 pb-4 shadow-[0_16px_40px_rgba(112,151,194,0.16)]">
-                    <p className="text-xs uppercase tracking-[0.28em] text-[#6b93b5]">状态快照</p>
-                    <p className="mt-2 text-3xl font-semibold text-[#15324c]">{statusTitle}</p>
-                    <p className="mt-2 text-sm text-[#60809f]">{statusNote}</p>
-                  </div>
-                </div>
-              </div>
-
-              <OverviewCards overview={overview} previousOverview={previousOverview} preset={preset} />
+              {/* 顶部区域：标题 + 4个卡片 */}
+              <OverviewTopCards
+                overview={overview}
+                previousOverview={previousOverview}
+                preset={preset}
+                selectedRangeLabel={selectedRangeLabel}
+                statusTitle={statusTitle}
+                statusNote={statusNote}
+              />
+              {/* 主数据卡片区域 */}
+              <OverviewMainCards
+                overview={overview}
+                previousOverview={previousOverview}
+                preset={preset}
+                selectedRangeLabel={selectedRangeLabel}
+                statusTitle={statusTitle}
+                statusNote={statusNote}
+              />
             </div>
           </div>
         </header>

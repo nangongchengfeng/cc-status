@@ -1,4 +1,4 @@
-﻿export type DashboardInterval = 'hour' | 'day';
+export type DashboardInterval = 'hour' | 'day';
 
 export interface DashboardQuery {
   startAt: number;
@@ -14,6 +14,7 @@ export interface DashboardOverview {
   totalCacheTokens: number;
   cacheReadTokens: number;
   inputTokens: number;
+  outputTokens: number;
 }
 
 export interface DashboardTrendPoint {

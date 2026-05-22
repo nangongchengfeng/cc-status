@@ -141,6 +141,7 @@ func (service *StatsService) Dashboard(
 	var totalCacheTokens int64
 	var cacheReadTokens int64
 	var inputTokens int64
+	var outputTokens int64
 
 	// 前一个周期的数据
 	previousActiveClients := make(map[string]struct{})
@@ -149,6 +150,7 @@ func (service *StatsService) Dashboard(
 	var previousTotalCacheTokens int64
 	var previousCacheReadTokens int64
 	var previousInputTokens int64
+	var previousOutputTokens int64
 	previousTotalCost := new(big.Rat)
 
 	for _, report := range reports {
@@ -162,6 +164,7 @@ func (service *StatsService) Dashboard(
 			totalCacheTokens += report.CacheReadTokens + report.CacheCreationTokens
 			cacheReadTokens += report.CacheReadTokens
 			inputTokens += report.InputTokens
+			outputTokens += report.OutputTokens
 			activeClients[report.ClientID] = struct{}{}
 			modelTokens[report.Model] += tokenCount
 			reportCost := parseDecimal(report.TotalCostUSD)
@@ -198,6 +201,7 @@ func (service *StatsService) Dashboard(
 			previousTotalCacheTokens += report.CacheReadTokens + report.CacheCreationTokens
 			previousCacheReadTokens += report.CacheReadTokens
 			previousInputTokens += report.InputTokens
+			previousOutputTokens += report.OutputTokens
 			previousActiveClients[report.ClientID] = struct{}{}
 			reportCost := parseDecimal(report.TotalCostUSD)
 			previousTotalCost.Add(previousTotalCost, reportCost)
@@ -265,6 +269,7 @@ func (service *StatsService) Dashboard(
 			TotalCacheTokens: totalCacheTokens,
 			CacheReadTokens:  cacheReadTokens,
 			InputTokens:      inputTokens,
+			OutputTokens:     outputTokens,
 		},
 		PreviousOverview: dto.StatsDashboardOverview{
 			TotalTokens:      previousTotalTokens,
@@ -274,6 +279,7 @@ func (service *StatsService) Dashboard(
 			TotalCacheTokens: previousTotalCacheTokens,
 			CacheReadTokens:  previousCacheReadTokens,
 			InputTokens:      previousInputTokens,
+			OutputTokens:     previousOutputTokens,
 		},
 		Trend:      trend,
 		TopModels:  topModels,

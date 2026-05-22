@@ -6,6 +6,9 @@ interface OverviewCardsProps {
   overview?: DashboardOverview;
   previousOverview?: DashboardOverview;
   preset: TimeRangePreset;
+  selectedRangeLabel: string;
+  statusTitle: string;
+  statusNote: string;
 }
 
 function PrimaryMetricCard(props: { title: string; value: string; note: string; accent: string; change?: string; isPositive?: boolean; compareLabel?: string; hideArrow?: boolean; secondaryValue?: string; unit?: string }) {
@@ -43,12 +46,24 @@ function PrimaryMetricCard(props: { title: string; value: string; note: string; 
   );
 }
 
-function SecondaryMetricCard(props: { title: string; value: string; note: string; change?: string; isPositive?: boolean; compareLabel?: string }) {
+function SmallMetricCard(props: { title: string; value: string; note: string; change?: string; isPositive?: boolean; compareLabel?: string; secondaryValue?: string; unit?: string; accent?: string }) {
   return (
-    <article className="rounded-[28px] border border-white/80 bg-white/72 px-4 pt-3 pb-4 shadow-[0_18px_48px_rgba(111,153,200,0.14)] backdrop-blur-xl flex flex-col justify-between">
+    <article className={[
+        'rounded-[28px] border border-white/80 bg-white/72 px-4 pt-3 pb-4 shadow-[0_18px_48px_rgba(111,153,200,0.14)] backdrop-blur-xl flex flex-col justify-between',
+        props.accent,
+      ].join(' ')}
+    >
       <div>
         <p className="text-xs uppercase tracking-[0.28em] text-[#6c92b4]">{props.title}</p>
-        <p className="mt-2 text-3xl font-semibold text-[#12304d]">{props.value}</p>
+        <div className="mt-2 flex items-baseline gap-1">
+          <p className="text-3xl font-semibold text-[#12304d]">{props.value}</p>
+          {props.unit && (
+            <p className="text-xl font-semibold text-[#12304d]">{props.unit}</p>
+          )}
+        </div>
+        {props.secondaryValue && (
+          <p className="mt-1 text-xs text-[#5f7f9e]">{props.secondaryValue}</p>
+        )}
       </div>
       <div className="mt-3">
         <p className="text-sm text-[#5f7f9e]">{props.note}</p>
@@ -61,6 +76,20 @@ function SecondaryMetricCard(props: { title: string; value: string; note: string
           </div>
         )}
       </div>
+    </article>
+  );
+}
+
+function InfoCard(props: { title: string; value: string; note: string; accent?: string }) {
+  return (
+    <article className={[
+        'rounded-[28px] border border-white/80 bg-white/72 px-4 pt-3 pb-4 shadow-[0_16px_40px_rgba(112,151,194,0.16)] backdrop-blur-xl flex flex-col justify-between',
+        props.accent,
+      ].join(' ')}
+    >
+      <p className="text-xs uppercase tracking-[0.28em] text-[#6b93b5]">{props.title}</p>
+      <p className="mt-2 text-3xl font-semibold text-[#15324c]">{props.value}</p>
+      <p className="mt-2 text-sm text-[#60809f]">{props.note}</p>
     </article>
   );
 }
@@ -90,25 +119,101 @@ function getCompareLabel(preset: TimeRangePreset): string {
   }
 }
 
-export function OverviewCards({ overview, previousOverview, preset }: OverviewCardsProps) {
-  const totalCost = overview ? formatMetricValue(overview.totalCostUsd, 'currency') : '--';
-  const totalTokensFull = overview ? formatMetricValue(overview.totalTokens, 'number') : '--';
-  const totalCacheTokensFull = overview ? formatMetricValue(overview.totalCacheTokens, 'number') : '--';
-  const totalRequests = overview ? formatMetricValue(overview.totalRequests, 'number') : '--';
-  const activeClients = overview ? formatMetricValue(overview.activeClients, 'number') : '--';
-
-  // 优先用万/亿显示主数字，完整版作为辅助
-  function getDisplayValue(value: number): { main: string; unit?: string; secondary?: string } {
-    const wanYi = formatNumberInWanYi(value);
-    const full = formatMetricValue(value, 'number');
-    if (wanYi) {
-      return { main: wanYi.number, unit: wanYi.unit, secondary: full };
-    }
-    return { main: full };
+// 优先用万/亿显示主数字，完整版作为辅助
+function getDisplayValue(value: number): { main: string; unit?: string; secondary?: string } {
+  const wanYi = formatNumberInWanYi(value);
+  const full = formatMetricValue(value, 'number');
+  if (wanYi) {
+    return { main: wanYi.number, unit: wanYi.unit, secondary: full };
   }
+  return { main: full };
+}
+
+// 计算缓存命中率: cache_read_tokens / (input_tokens + cache_read_tokens)
+function calculateCacheHitRate(cacheRead: number, input: number): string | null {
+  const denominator = input + cacheRead;
+  if (denominator === 0) return null;
+  const rate = (cacheRead / denominator) * 100;
+  return `${rate.toFixed(1)}%`;
+}
+
+export function OverviewTopCards({ overview, previousOverview, preset, selectedRangeLabel, statusTitle, statusNote }: OverviewCardsProps) {
+  const compareLabel = getCompareLabel(preset);
+
+  const requestChange = overview && previousOverview
+    ? calculateChange(overview.totalRequests, previousOverview.totalRequests)
+    : null;
+
+  const activeClientsChange = overview && previousOverview
+    ? calculateChange(overview.activeClients, previousOverview.activeClients)
+    : null;
+
+  const activeClientsValue = overview ? formatMetricValue(overview.activeClients, 'number') : '--';
+  const totalRequestsValue = overview ? formatMetricValue(overview.totalRequests, 'number') : '--';
+
+  return (
+    <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+      {/* 左侧标题区域 */}
+      <div className="flex flex-col justify-center">
+        <div className="inline-flex items-center rounded-full border border-[#cfe0f0] bg-white/55 px-4 py-2 text-xs uppercase tracking-[0.32em] text-[#4f86b7] w-fit">
+          Claude Usage Deck
+        </div>
+        <h1 className="mt-6 text-5xl font-semibold leading-[1.05] text-[#12304d] xl:text-6xl">Claude 用量监控</h1>
+        <p className="mt-4 max-w-2xl text-lg leading-8 text-[#52718f]">优先展示费用数据，其次为使用来源。</p>
+        <div className="mt-6 flex flex-wrap gap-3 text-sm text-[#3f6180]">
+          <span className="rounded-full border border-[#d6e6f4] bg-white/70 px-4 py-2 shadow-[0_12px_30px_rgba(124,164,208,0.12)]">
+            当前按天粒度观察
+          </span>
+          <span className="rounded-full border border-[#d6e6f4] bg-white/70 px-4 py-2 shadow-[0_12px_30px_rgba(124,164,208,0.12)]">
+            范围：{selectedRangeLabel}
+          </span>
+          <span className="rounded-full border border-[#c9ddf4] bg-[linear-gradient(135deg,rgba(90,177,255,0.15),rgba(255,255,255,0.78))] px-4 py-2 text-[#1d5f92] shadow-[0_12px_30px_rgba(124,164,208,0.12)]">
+            费用数据为页面核心指标。
+          </span>
+        </div>
+      </div>
+
+      {/* 右侧 2x2 卡片网格 */}
+      <div className="grid grid-cols-2 gap-4">
+        <InfoCard
+          title="当前视图"
+          value={selectedRangeLabel}
+          note="切换时间范围将刷新页面数据。"
+        />
+        <InfoCard
+          title="状态快照"
+          value={statusTitle}
+          note={statusNote}
+          accent="bg-[linear-gradient(145deg,rgba(72,150,255,0.14),rgba(255,255,255,0.86))]"
+        />
+        <SmallMetricCard
+          title="总请求数"
+          value={totalRequestsValue}
+          note="请求总数统计。"
+          change={requestChange?.change}
+          isPositive={requestChange?.isPositive}
+          compareLabel={requestChange ? compareLabel : undefined}
+        />
+        <SmallMetricCard
+          title="活跃客户端"
+          value={activeClientsValue}
+          note="活跃客户端数量。"
+          change={activeClientsChange?.change}
+          isPositive={activeClientsChange?.isPositive}
+          compareLabel={activeClientsChange ? compareLabel : undefined}
+        />
+      </div>
+    </div>
+  );
+}
+
+export function OverviewMainCards({ overview, previousOverview, preset }: OverviewCardsProps) {
+  const totalCost = overview ? formatMetricValue(overview.totalCostUsd, 'currency') : '--';
 
   const totalTokensDisplay = overview ? getDisplayValue(overview.totalTokens) : { main: '--' };
   const totalCacheTokensDisplay = overview ? getDisplayValue(overview.totalCacheTokens) : { main: '--' };
+  const inputTokensDisplay = overview ? getDisplayValue(overview.inputTokens) : { main: '--' };
+  const outputTokensDisplay = overview ? getDisplayValue(overview.outputTokens) : { main: '--' };
 
   const costChange = overview && previousOverview
     ? calculateChange(parseFloat(overview.totalCostUsd), parseFloat(previousOverview.totalCostUsd))
@@ -118,17 +223,13 @@ export function OverviewCards({ overview, previousOverview, preset }: OverviewCa
     ? calculateChange(overview.totalTokens, previousOverview.totalTokens)
     : null;
 
-  const requestChange = overview && previousOverview
-    ? calculateChange(overview.totalRequests, previousOverview.totalRequests)
+  const inputChange = overview && previousOverview
+    ? calculateChange(overview.inputTokens, previousOverview.inputTokens)
     : null;
 
-  // 计算缓存命中率: cache_read_tokens / (input_tokens + cache_read_tokens)
-  function calculateCacheHitRate(cacheRead: number, input: number): string | null {
-    const denominator = input + cacheRead;
-    if (denominator === 0) return null;
-    const rate = (cacheRead / denominator) * 100;
-    return `${rate.toFixed(1)}%`;
-  }
+  const outputChange = overview && previousOverview
+    ? calculateChange(overview.outputTokens, previousOverview.outputTokens)
+    : null;
 
   const cacheHitRate = overview
     ? calculateCacheHitRate(overview.cacheReadTokens, overview.inputTokens)
@@ -137,7 +238,7 @@ export function OverviewCards({ overview, previousOverview, preset }: OverviewCa
   const compareLabel = getCompareLabel(preset);
 
   return (
-    <section className="grid gap-4 xl:grid-cols-[1fr_1fr_1fr_0.9fr]">
+    <div className="grid gap-4 xl:grid-cols-[1fr_1fr_1fr_0.9fr]">
       <PrimaryMetricCard
         title="总费用"
         value={totalCost}
@@ -171,16 +272,27 @@ export function OverviewCards({ overview, previousOverview, preset }: OverviewCa
         hideArrow={true}
       />
       <div className="grid gap-4">
-        <SecondaryMetricCard
-          title="总请求数"
-          value={totalRequests}
-          note="请求总数统计。"
-          change={requestChange?.change}
-          isPositive={requestChange?.isPositive}
-          compareLabel={requestChange ? compareLabel : undefined}
+        <SmallMetricCard
+          title="输入 Token"
+          value={inputTokensDisplay.main}
+          unit={inputTokensDisplay.unit}
+          secondaryValue={inputTokensDisplay.secondary}
+          note="输入 Token 统计。"
+          change={inputChange?.change}
+          isPositive={inputChange?.isPositive}
+          compareLabel={inputChange ? compareLabel : undefined}
         />
-        <SecondaryMetricCard title="活跃客户端" value={activeClients} note="活跃客户端数量。" />
+        <SmallMetricCard
+          title="输出 Token"
+          value={outputTokensDisplay.main}
+          unit={outputTokensDisplay.unit}
+          secondaryValue={outputTokensDisplay.secondary}
+          note="输出 Token 统计。"
+          change={outputChange?.change}
+          isPositive={outputChange?.isPositive}
+          compareLabel={outputChange ? compareLabel : undefined}
+        />
       </div>
-    </section>
+    </div>
   );
 }

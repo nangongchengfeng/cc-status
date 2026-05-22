@@ -63,6 +63,7 @@ type StatsDashboardOverview struct {
 	TotalCacheTokens int64  `json:"total_cache_tokens"`
 	CacheReadTokens  int64  `json:"cache_read_tokens"`
 	InputTokens      int64  `json:"input_tokens"`
+	OutputTokens     int64  `json:"output_tokens"`
 }
 
 // StatsDashboardTrendPoint 表示仪表盘统一时间桶数据。
