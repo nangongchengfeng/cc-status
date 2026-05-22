@@ -1,6 +1,6 @@
-﻿import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import { formatBucketLabel, formatMetricValue, getModelDisplayName } from '@/utils/format';
+import { formatBucketLabel, formatMetricValue, formatRecentRequestTime, getModelDisplayName } from '@/utils/format';
 
 describe('format helpers', () => {
   it('格式化金额与大数字卡片值', () => {
@@ -16,5 +16,9 @@ describe('format helpers', () => {
   it('模型展示名缺失时回退到原始模型名', () => {
     expect(getModelDisplayName({ displayName: 'Claude Sonnet 4', model: 'claude-sonnet-4-0' })).toBe('Claude Sonnet 4');
     expect(getModelDisplayName({ displayName: '', model: 'claude-sonnet-4-0' })).toBe('claude-sonnet-4-0');
+  });
+
+  it('最近请求时间统一格式化为上海时区', () => {
+    expect(formatRecentRequestTime(1747879200)).toBe('2025-05-22 10:00');
   });
 });

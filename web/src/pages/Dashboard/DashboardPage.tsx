@@ -1,10 +1,12 @@
-﻿import { TIME_RANGE_OPTIONS } from '@/constants/timeRanges';
+import { TIME_RANGE_OPTIONS } from '@/constants/timeRanges';
 import { useDashboardQuery } from '@/hooks/useDashboardQuery';
 import { useRecentLogsQuery } from '@/hooks/useRecentLogsQuery';
+import { CacheAnalysis } from '@/pages/Dashboard/components/CacheAnalysis';
 import { ClientRanking } from '@/pages/Dashboard/components/ClientRanking';
 import { CostTrendChart } from '@/pages/Dashboard/components/CostTrendChart';
 import { ModelRanking } from '@/pages/Dashboard/components/ModelRanking';
 import { OverviewCards } from '@/pages/Dashboard/components/OverviewCards';
+import { RecentRequestsTable } from '@/pages/Dashboard/components/RecentRequestsTable';
 import { TokenTrendChart } from '@/pages/Dashboard/components/TokenTrendChart';
 import { buildQueryTimeRange, getDashboardIntervalLabel, type TimeRangePreset } from '@/utils/timeRange';
 import { useMemo, useState } from 'react';
@@ -21,6 +23,8 @@ export function DashboardPage() {
 
   const hasError = dashboardQuery.isError || recentLogsQuery.isError;
   const trend = dashboardQuery.data?.trend ?? [];
+  const cacheAnalysis = dashboardQuery.data?.cacheAnalysis;
+  const recentLogs = recentLogsQuery.data?.data ?? [];
 
   return (
     <main className="min-h-screen px-6 py-8 text-[#f7f2e8]">
@@ -129,14 +133,31 @@ export function DashboardPage() {
 
         <aside className="grid gap-6">
           <section className="rounded-[32px] border border-white/10 bg-black/20 p-6 backdrop-blur-sm">
-            <h2 className="text-2xl font-semibold text-[#fff5e6]">查询状态</h2>
-            <p className="mt-3 text-sm leading-7 text-[#cab99d]">
-              dashboard: {dashboardQuery.status} / logs: {recentLogsQuery.status}
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-semibold text-[#fff5e6]">缓存效益</h2>
+                <p className="mt-2 text-sm leading-7 text-[#cab99d]">
+                  节省、读取和建设三项成本，跟随当前时间范围一起刷新。
+                </p>
+              </div>
+            </div>
+            <div className="mt-6">
+              <CacheAnalysis analysis={cacheAnalysis} />
+            </div>
           </section>
+
           <section className="rounded-[32px] border border-white/10 bg-black/20 p-6 backdrop-blur-sm">
-            <h2 className="text-2xl font-semibold text-[#fff5e6]">视图提示</h2>
-            <p className="mt-3 text-sm leading-7 text-[#cab99d]">现在卡片、趋势和排行已经共用一套 query 口径。</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-semibold text-[#fff5e6]">最近请求</h2>
+                <p className="mt-2 text-sm leading-7 text-[#cab99d]">
+                  直接复用日志接口的最新排序结果。dashboard: {dashboardQuery.status} / logs: {recentLogsQuery.status}
+                </p>
+              </div>
+            </div>
+            <div className="mt-6">
+              <RecentRequestsTable items={recentLogs} />
+            </div>
           </section>
         </aside>
       </div>
