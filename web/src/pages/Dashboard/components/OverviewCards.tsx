@@ -80,11 +80,10 @@ export function OverviewCards({ overview, trend }: OverviewCardsProps) {
     ? calculateChange(today.totalRequests, yesterday.totalRequests)
     : null;
 
-  // 费用：下降是好事（绿色），增长是坏事（红色）
-  // Token/请求：增长是好事（绿色），下降是坏事（红色）
+  // 统一规则：下降绿色（好事），上升红色（坏事）
   const costIsPositive = costChange ? !costChange.isPositive : undefined;
-  const tokenIsPositive = tokenChange?.isPositive;
-  const requestIsPositive = requestChange?.isPositive;
+  const tokenIsPositive = tokenChange ? !tokenChange.isPositive : undefined;
+  const requestIsPositive = requestChange ? !requestChange.isPositive : undefined;
 
   return (
     <section className="grid gap-4 xl:grid-cols-[1.28fr_1fr_0.9fr]">
