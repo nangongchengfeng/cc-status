@@ -56,10 +56,13 @@ type StatsDashboardResponse struct {
 
 // StatsDashboardOverview 表示仪表盘总览卡片数据。
 type StatsDashboardOverview struct {
-	TotalTokens   int64  `json:"total_tokens"`
-	TotalCostUSD  string `json:"total_cost_usd"`
-	TotalRequests int64  `json:"total_requests"`
-	ActiveClients int64  `json:"active_clients"`
+	TotalTokens      int64  `json:"total_tokens"`
+	TotalCostUSD     string `json:"total_cost_usd"`
+	TotalRequests    int64  `json:"total_requests"`
+	ActiveClients    int64  `json:"active_clients"`
+	TotalCacheTokens int64  `json:"total_cache_tokens"`
+	CacheReadTokens  int64  `json:"cache_read_tokens"`
+	InputTokens      int64  `json:"input_tokens"`
 }
 
 // StatsDashboardTrendPoint 表示仪表盘统一时间桶数据。

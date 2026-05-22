@@ -138,11 +138,17 @@ func (service *StatsService) Dashboard(
 
 	var totalTokens int64
 	var totalRequests int64
+	var totalCacheTokens int64
+	var cacheReadTokens int64
+	var inputTokens int64
 
 	// 前一个周期的数据
 	previousActiveClients := make(map[string]struct{})
 	var previousTotalTokens int64
 	var previousTotalRequests int64
+	var previousTotalCacheTokens int64
+	var previousCacheReadTokens int64
+	var previousInputTokens int64
 	previousTotalCost := new(big.Rat)
 
 	for _, report := range reports {
@@ -153,6 +159,9 @@ func (service *StatsService) Dashboard(
 			tokenCount := report.InputTokens + report.OutputTokens + report.CacheReadTokens + report.CacheCreationTokens
 			totalTokens += tokenCount
 			totalRequests++
+			totalCacheTokens += report.CacheReadTokens + report.CacheCreationTokens
+			cacheReadTokens += report.CacheReadTokens
+			inputTokens += report.InputTokens
 			activeClients[report.ClientID] = struct{}{}
 			modelTokens[report.Model] += tokenCount
 			reportCost := parseDecimal(report.TotalCostUSD)
@@ -186,6 +195,9 @@ func (service *StatsService) Dashboard(
 			tokenCount := report.InputTokens + report.OutputTokens + report.CacheReadTokens + report.CacheCreationTokens
 			previousTotalTokens += tokenCount
 			previousTotalRequests++
+			previousTotalCacheTokens += report.CacheReadTokens + report.CacheCreationTokens
+			previousCacheReadTokens += report.CacheReadTokens
+			previousInputTokens += report.InputTokens
 			previousActiveClients[report.ClientID] = struct{}{}
 			reportCost := parseDecimal(report.TotalCostUSD)
 			previousTotalCost.Add(previousTotalCost, reportCost)
@@ -246,16 +258,22 @@ func (service *StatsService) Dashboard(
 
 	return dto.StatsDashboardResponse{
 		Overview: dto.StatsDashboardOverview{
-			TotalTokens:   totalTokens,
-			TotalCostUSD:  totalCost.FloatString(10),
-			TotalRequests: totalRequests,
-			ActiveClients: int64(len(activeClients)),
+			TotalTokens:      totalTokens,
+			TotalCostUSD:     totalCost.FloatString(10),
+			TotalRequests:    totalRequests,
+			ActiveClients:    int64(len(activeClients)),
+			TotalCacheTokens: totalCacheTokens,
+			CacheReadTokens:  cacheReadTokens,
+			InputTokens:      inputTokens,
 		},
 		PreviousOverview: dto.StatsDashboardOverview{
-			TotalTokens:   previousTotalTokens,
-			TotalCostUSD:  previousTotalCost.FloatString(10),
-			TotalRequests: previousTotalRequests,
-			ActiveClients: int64(len(previousActiveClients)),
+			TotalTokens:      previousTotalTokens,
+			TotalCostUSD:     previousTotalCost.FloatString(10),
+			TotalRequests:    previousTotalRequests,
+			ActiveClients:    int64(len(previousActiveClients)),
+			TotalCacheTokens: previousTotalCacheTokens,
+			CacheReadTokens:  previousCacheReadTokens,
+			InputTokens:      previousInputTokens,
 		},
 		Trend:      trend,
 		TopModels:  topModels,

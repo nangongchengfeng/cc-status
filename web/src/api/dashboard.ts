@@ -6,6 +6,9 @@ interface DashboardApiOverview {
   total_cost_usd?: string;
   total_requests?: number;
   active_clients?: number;
+  total_cache_tokens?: number;
+  cache_read_tokens?: number;
+  input_tokens?: number;
 }
 
 interface DashboardApiTrendPoint {
@@ -65,12 +68,18 @@ export async function getDashboard(query: DashboardQuery): Promise<DashboardResp
       totalCostUsd: payload.overview?.total_cost_usd ?? '0',
       totalRequests: payload.overview?.total_requests ?? 0,
       activeClients: payload.overview?.active_clients ?? 0,
+      totalCacheTokens: payload.overview?.total_cache_tokens ?? 0,
+      cacheReadTokens: payload.overview?.cache_read_tokens ?? 0,
+      inputTokens: payload.overview?.input_tokens ?? 0,
     },
     previousOverview: {
       totalTokens: payload.previous_overview?.total_tokens ?? 0,
       totalCostUsd: payload.previous_overview?.total_cost_usd ?? '0',
       totalRequests: payload.previous_overview?.total_requests ?? 0,
       activeClients: payload.previous_overview?.active_clients ?? 0,
+      totalCacheTokens: payload.previous_overview?.total_cache_tokens ?? 0,
+      cacheReadTokens: payload.previous_overview?.cache_read_tokens ?? 0,
+      inputTokens: payload.previous_overview?.input_tokens ?? 0,
     },
     trend: (payload.trend ?? []).map((item) => ({
       bucket: item.bucket,

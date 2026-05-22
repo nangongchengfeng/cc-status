@@ -112,3 +112,13 @@ export function formatUnixTimestamp(timestamp: number) {
 
   return `${valueByType.year}-${valueByType.month}-${valueByType.day} ${valueByType.hour}:${valueByType.minute}`;
 }
+
+export function formatNumberInWanYi(value: number): string | null {
+  if (value >= 100_000_000) {
+    return `≈ ${(value / 100_000_000).toFixed(2)} 亿`;
+  }
+  if (value >= 10_000) {
+    return `≈ ${(value / 10_000).toFixed(2)} 万`;
+  }
+  return null;
+}

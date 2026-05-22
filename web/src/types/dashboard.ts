@@ -11,6 +11,9 @@ export interface DashboardOverview {
   totalCostUsd: string;
   totalRequests: number;
   activeClients: number;
+  totalCacheTokens: number;
+  cacheReadTokens: number;
+  inputTokens: number;
 }
 
 export interface DashboardTrendPoint {
