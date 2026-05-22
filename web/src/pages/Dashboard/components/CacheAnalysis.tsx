@@ -30,7 +30,7 @@ export function CacheAnalysis({ analysis }: CacheAnalysisProps) {
   if (!analysis) {
     return (
       <div className="grid h-[220px] place-items-center rounded-[28px] border border-dashed border-[#cfe0f1] bg-[linear-gradient(145deg,rgba(255,255,255,0.72),rgba(232,243,252,0.72))] text-sm text-[#6a86a3]">
-        当前时间范围还没有缓存数据。
+        当前时间范围暂无缓存数据。
       </div>
     );
   }
@@ -47,7 +47,7 @@ export function CacheAnalysis({ analysis }: CacheAnalysisProps) {
         >
           <p className="text-xs uppercase tracking-[0.25em] text-[#6c92b4]">{metric.label}</p>
           <p className={`mt-4 text-3xl font-semibold ${metric.accent}`}>{formatMetricValue(analysis[metric.key], 'currency')}</p>
-          <p className="mt-2 text-sm text-[#5f7f9e]">{metric.key === 'savedCostUsd' ? '先看省下多少。' : '这是换来的成本。'}</p>
+          <p className="mt-2 text-sm text-[#5f7f9e]">{metric.key === 'savedCostUsd' ? '缓存节省的费用。' : '缓存相关成本支出。'}</p>
         </article>
       ))}
     </div>

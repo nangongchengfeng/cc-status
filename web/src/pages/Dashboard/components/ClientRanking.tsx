@@ -11,7 +11,7 @@ export function ClientRanking({ items }: ClientRankingProps) {
   if (items.length === 0) {
     return (
       <div className="grid h-[320px] place-items-center rounded-[28px] border border-dashed border-[#cfe0f1] bg-[linear-gradient(145deg,rgba(255,255,255,0.72),rgba(232,243,252,0.72))] text-sm text-[#6a86a3]">
-        客户端排行还没数据。
+        当前时间范围暂无客户端排行数据。
       </div>
     );
   }

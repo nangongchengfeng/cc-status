@@ -12,7 +12,7 @@ export function TokenTrendChart({ trend, interval }: TokenTrendChartProps) {
   if (trend.length === 0) {
     return (
       <div className="grid h-[300px] place-items-center rounded-[28px] border border-dashed border-[#cfe0f1] bg-[linear-gradient(145deg,rgba(255,255,255,0.72),rgba(232,243,252,0.72))] text-sm text-[#6a86a3]">
-        还没有 token 趋势。
+        当前时间范围暂无 Token 趋势数据。
       </div>
     );
   }

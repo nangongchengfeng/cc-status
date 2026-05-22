@@ -9,7 +9,7 @@ export function RecentRequestsTable({ items }: RecentRequestsTableProps) {
   if (items.length === 0) {
     return (
       <div className="grid h-[320px] place-items-center rounded-[28px] border border-dashed border-[#cfe0f1] bg-[linear-gradient(145deg,rgba(255,255,255,0.72),rgba(232,243,252,0.72))] text-sm text-[#6a86a3]">
-        当前时间范围还没有最近请求。
+        当前时间范围暂无请求记录。
       </div>
     );
   }

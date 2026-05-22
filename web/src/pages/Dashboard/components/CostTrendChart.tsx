@@ -12,7 +12,7 @@ export function CostTrendChart({ trend, interval }: CostTrendChartProps) {
   if (trend.length === 0) {
     return (
       <div className="grid h-[300px] place-items-center rounded-[28px] border border-dashed border-[#cfe0f1] bg-[linear-gradient(145deg,rgba(255,255,255,0.72),rgba(232,243,252,0.72))] text-sm text-[#6a86a3]">
-        这段时间还没花钱。
+        当前时间范围暂无费用数据。
       </div>
     );
   }

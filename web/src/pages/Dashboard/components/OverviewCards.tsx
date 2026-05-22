@@ -45,18 +45,18 @@ export function OverviewCards({ overview }: OverviewCardsProps) {
       <PrimaryMetricCard
         title="总费用"
         value={totalCost}
-        note="费用是主线。"
+        note="费用为核心指标。"
         accent="bg-[linear-gradient(145deg,rgba(91,178,255,0.18),rgba(255,255,255,0.88))]"
       />
       <PrimaryMetricCard
         title="总 Token"
         value={totalTokens}
-        note="先看量，再看因。"
+        note="优先展示用量数据。"
         accent="bg-[linear-gradient(145deg,rgba(181,224,255,0.68),rgba(255,255,255,0.92))]"
       />
       <div className="grid gap-4">
-        <SecondaryMetricCard title="总请求数" value={totalRequests} note="热度先站住。" />
-        <SecondaryMetricCard title="活跃客户端" value={activeClients} note="谁在跑，看这里。" />
+        <SecondaryMetricCard title="总请求数" value={totalRequests} note="请求总数统计。" />
+        <SecondaryMetricCard title="活跃客户端" value={activeClients} note="活跃客户端数量。" />
       </div>
     </section>
   );
