@@ -76,7 +76,7 @@ export function DashboardPage() {
                 </div>
               </div>
 
-              <OverviewCards overview={overview} previousOverview={previousOverview} />
+              <OverviewCards overview={overview} previousOverview={previousOverview} preset={preset} />
             </div>
           </div>
         </header>
