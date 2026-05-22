@@ -18,7 +18,7 @@ type UsageReportReader interface {
 	List(context.Context, *gorm.DB) ([]entity.UsageReport, error)
 }
 
-// StatsService 承载总览与趋势统计能力。
+// StatsService 承载总览、趋势与仪表盘统计能力。
 type StatsService struct {
 	db     *gorm.DB
 	reader UsageReportReader
@@ -66,6 +66,34 @@ func (service *StatsService) Overview(ctx context.Context) (dto.StatsOverviewRes
 		ActiveClients: int64(len(activeClients)),
 		TopModels:     buildTopModels(modelTokens),
 		TopClients:    buildTopClients(clientCosts),
+	}, nil
+}
+
+// Dashboard 返回仪表盘统计接口的稳定响应骨架。
+func (service *StatsService) Dashboard(
+	ctx context.Context,
+	query dto.StatsDashboardQuery,
+) (dto.StatsDashboardResponse, error) {
+	if query.Interval != "hour" && query.Interval != "day" {
+		return dto.StatsDashboardResponse{}, ValidationError{message: "interval 仅支持 hour 或 day"}
+	}
+	if query.StartAt > query.EndAt {
+		return dto.StatsDashboardResponse{}, ValidationError{message: "start_at 必须小于等于 end_at"}
+	}
+
+	// 首个切片先固定 dashboard 契约，后续 issue 再逐步填充真实聚合结果。
+	return dto.StatsDashboardResponse{
+		Overview: dto.StatsDashboardOverview{
+			TotalCostUSD: "0.0000000000",
+		},
+		Trend:      []dto.StatsDashboardTrendPoint{},
+		TopModels:  []dto.StatsDashboardModelRank{},
+		TopClients: []dto.StatsClientRank{},
+		CacheAnalysis: dto.StatsDashboardCacheAnalysis{
+			SavedCostUSD:         "0.0000000000",
+			CacheReadCostUSD:     "0.0000000000",
+			CacheCreationCostUSD: "0.0000000000",
+		},
 	}, nil
 }
 

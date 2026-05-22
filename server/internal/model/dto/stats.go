@@ -29,12 +29,61 @@ type StatsTrendQuery struct {
 	EndAt    int64  `form:"end_at"`
 }
 
+// StatsDashboardQuery 表示仪表盘统计接口的查询参数。
+type StatsDashboardQuery struct {
+	Interval string `form:"interval" binding:"required"`
+	StartAt  int64  `form:"start_at" binding:"required"`
+	EndAt    int64  `form:"end_at" binding:"required"`
+}
+
 // StatsTrendPoint 表示单个趋势桶的聚合结果。
 type StatsTrendPoint struct {
 	Bucket        string `json:"bucket"`
 	TotalTokens   int64  `json:"total_tokens"`
 	TotalRequests int64  `json:"total_requests"`
 	TotalCostUSD  string `json:"total_cost_usd"`
+}
+
+// StatsDashboardResponse 表示仪表盘统计接口的响应体。
+type StatsDashboardResponse struct {
+	Overview      StatsDashboardOverview      `json:"overview"`
+	Trend         []StatsDashboardTrendPoint  `json:"trend"`
+	TopModels     []StatsDashboardModelRank   `json:"top_models"`
+	TopClients    []StatsClientRank           `json:"top_clients"`
+	CacheAnalysis StatsDashboardCacheAnalysis `json:"cache_analysis"`
+}
+
+// StatsDashboardOverview 表示仪表盘总览卡片数据。
+type StatsDashboardOverview struct {
+	TotalTokens   int64  `json:"total_tokens"`
+	TotalCostUSD  string `json:"total_cost_usd"`
+	TotalRequests int64  `json:"total_requests"`
+	ActiveClients int64  `json:"active_clients"`
+}
+
+// StatsDashboardTrendPoint 表示仪表盘统一时间桶数据。
+type StatsDashboardTrendPoint struct {
+	Bucket              string `json:"bucket"`
+	InputTokens         int64  `json:"input_tokens"`
+	OutputTokens        int64  `json:"output_tokens"`
+	CacheReadTokens     int64  `json:"cache_read_tokens"`
+	CacheCreationTokens int64  `json:"cache_creation_tokens"`
+	TotalRequests       int64  `json:"total_requests"`
+	TotalCostUSD        string `json:"total_cost_usd"`
+}
+
+// StatsDashboardModelRank 表示仪表盘模型排行项。
+type StatsDashboardModelRank struct {
+	Model       string `json:"model"`
+	DisplayName string `json:"display_name"`
+	TotalTokens int64  `json:"total_tokens"`
+}
+
+// StatsDashboardCacheAnalysis 表示仪表盘缓存效益分析数据。
+type StatsDashboardCacheAnalysis struct {
+	SavedCostUSD         string `json:"saved_cost_usd"`
+	CacheReadCostUSD     string `json:"cache_read_cost_usd"`
+	CacheCreationCostUSD string `json:"cache_creation_cost_usd"`
 }
 
 // LogsQuery 表示原始日志查询接口的查询参数。

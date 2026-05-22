@@ -10,15 +10,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// statsOverviewer 抽象总览统计接口所需的最小业务能力。
-type statsOverviewer interface {
+// statsReader 抽象统计接口所需的最小业务能力。
+type statsReader interface {
 	Overview(context.Context) (dto.StatsOverviewResponse, error)
 	Trend(context.Context, dto.StatsTrendQuery) ([]dto.StatsTrendPoint, error)
+	Dashboard(context.Context, dto.StatsDashboardQuery) (dto.StatsDashboardResponse, error)
 }
 
 // StatsHandler 负责统计接口的参数绑定与响应序列化。
 type StatsHandler struct {
-	service statsOverviewer
+	service statsReader
 }
 
 // NewStatsHandler 创建统计 handler。
@@ -63,4 +64,25 @@ func (handler *StatsHandler) HandleTrend(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"data": trend})
+}
+
+// HandleDashboard 返回仪表盘统计结果。
+func (handler *StatsHandler) HandleDashboard(ctx *gin.Context) {
+	var query dto.StatsDashboardQuery
+	if err := ctx.ShouldBindQuery(&query); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorData("INVALID_REQUEST", "查询参数不合法"))
+		return
+	}
+
+	dashboard, err := handler.service.Dashboard(ctx, query)
+	if err != nil {
+		if service.IsValidationError(err) {
+			ctx.JSON(http.StatusBadRequest, errorData("INVALID_REQUEST", err.Error()))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorData("INTERNAL_ERROR", "读取仪表盘统计失败"))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": dashboard})
 }

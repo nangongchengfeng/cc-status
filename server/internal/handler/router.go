@@ -38,6 +38,7 @@ func NewRouter(
 	if statsHandler != nil {
 		protected.GET("/stats/overview", statsHandler.HandleOverview)
 		protected.GET("/stats/trend", statsHandler.HandleTrend)
+		protected.GET("/stats/dashboard", statsHandler.HandleDashboard)
 	}
 	if logsHandler != nil {
 		protected.GET("/logs", logsHandler.HandleListLogs)

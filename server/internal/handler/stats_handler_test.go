@@ -392,6 +392,205 @@ func TestStatsTrendRouteRejectsInvalidInterval(t *testing.T) {
 	}
 }
 
+func TestStatsDashboardRouteReturnsContractSkeleton(t *testing.T) {
+	t.Parallel()
+
+	dbPath := filepath.Join(t.TempDir(), "server.db")
+	db, err := repository.OpenDatabase(dbPath)
+	if err != nil {
+		t.Fatalf("OpenDatabase() returned error: %v", err)
+	}
+	if err := repository.InitializeSchema(db); err != nil {
+		t.Fatalf("InitializeSchema() returned error: %v", err)
+	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("DB() returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = sqlDB.Close()
+	})
+
+	location, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		t.Fatalf("LoadLocation() returned error: %v", err)
+	}
+
+	startAt := time.Date(2026, 5, 21, 0, 0, 0, 0, location).Unix()
+	endAt := time.Date(2026, 5, 21, 23, 0, 0, 0, location).Unix()
+
+	router := newTestStatsRouter(t, db)
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/api/v1/stats/dashboard?interval=day&start_at="+formatUnix(startAt)+"&end_at="+formatUnix(endAt),
+		nil,
+	)
+	request.Header.Set("Authorization", "Bearer secret-token")
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+
+	var response struct {
+		Data struct {
+			Overview struct {
+				TotalTokens   int64  `json:"total_tokens"`
+				TotalCostUSD  string `json:"total_cost_usd"`
+				TotalRequests int64  `json:"total_requests"`
+				ActiveClients int64  `json:"active_clients"`
+			} `json:"overview"`
+			Trend []struct {
+				Bucket              string `json:"bucket"`
+				InputTokens         int64  `json:"input_tokens"`
+				OutputTokens        int64  `json:"output_tokens"`
+				CacheReadTokens     int64  `json:"cache_read_tokens"`
+				CacheCreationTokens int64  `json:"cache_creation_tokens"`
+				TotalRequests       int64  `json:"total_requests"`
+				TotalCostUSD        string `json:"total_cost_usd"`
+			} `json:"trend"`
+			TopModels []struct {
+				Model       string `json:"model"`
+				DisplayName string `json:"display_name"`
+				TotalTokens int64  `json:"total_tokens"`
+			} `json:"top_models"`
+			TopClients []struct {
+				ClientID     string `json:"client_id"`
+				TotalCostUSD string `json:"total_cost_usd"`
+			} `json:"top_clients"`
+			CacheAnalysis struct {
+				SavedCostUSD         string `json:"saved_cost_usd"`
+				CacheReadCostUSD     string `json:"cache_read_cost_usd"`
+				CacheCreationCostUSD string `json:"cache_creation_cost_usd"`
+			} `json:"cache_analysis"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Unmarshal() returned error: %v", err)
+	}
+
+	if response.Data.Overview.TotalTokens != 0 || response.Data.Overview.TotalRequests != 0 || response.Data.Overview.ActiveClients != 0 {
+		t.Fatalf("unexpected overview skeleton: %+v", response.Data.Overview)
+	}
+	assertDecimalEqual(t, response.Data.Overview.TotalCostUSD, "0")
+	if len(response.Data.Trend) != 0 || len(response.Data.TopModels) != 0 || len(response.Data.TopClients) != 0 {
+		t.Fatalf("unexpected non-empty dashboard slices: %+v", response.Data)
+	}
+	assertDecimalEqual(t, response.Data.CacheAnalysis.SavedCostUSD, "0")
+	assertDecimalEqual(t, response.Data.CacheAnalysis.CacheReadCostUSD, "0")
+	assertDecimalEqual(t, response.Data.CacheAnalysis.CacheCreationCostUSD, "0")
+}
+
+func TestStatsDashboardRouteRejectsInvalidQuery(t *testing.T) {
+	t.Parallel()
+
+	dbPath := filepath.Join(t.TempDir(), "server.db")
+	db, err := repository.OpenDatabase(dbPath)
+	if err != nil {
+		t.Fatalf("OpenDatabase() returned error: %v", err)
+	}
+	if err := repository.InitializeSchema(db); err != nil {
+		t.Fatalf("InitializeSchema() returned error: %v", err)
+	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("DB() returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = sqlDB.Close()
+	})
+
+	router := newTestStatsRouter(t, db)
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/api/v1/stats/dashboard?interval=week&start_at=1743840000&end_at=1743926400",
+		nil,
+	)
+	request.Header.Set("Authorization", "Bearer secret-token")
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+}
+
+func TestStatsDashboardRouteRequiresExplicitRange(t *testing.T) {
+	t.Parallel()
+
+	dbPath := filepath.Join(t.TempDir(), "server.db")
+	db, err := repository.OpenDatabase(dbPath)
+	if err != nil {
+		t.Fatalf("OpenDatabase() returned error: %v", err)
+	}
+	if err := repository.InitializeSchema(db); err != nil {
+		t.Fatalf("InitializeSchema() returned error: %v", err)
+	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("DB() returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = sqlDB.Close()
+	})
+
+	router := newTestStatsRouter(t, db)
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/api/v1/stats/dashboard?interval=day&end_at=1743926400",
+		nil,
+	)
+	request.Header.Set("Authorization", "Bearer secret-token")
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+}
+
+func TestStatsDashboardRouteRequiresAuth(t *testing.T) {
+	t.Parallel()
+
+	dbPath := filepath.Join(t.TempDir(), "server.db")
+	db, err := repository.OpenDatabase(dbPath)
+	if err != nil {
+		t.Fatalf("OpenDatabase() returned error: %v", err)
+	}
+	if err := repository.InitializeSchema(db); err != nil {
+		t.Fatalf("InitializeSchema() returned error: %v", err)
+	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("DB() returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = sqlDB.Close()
+	})
+
+	router := newTestStatsRouter(t, db)
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/api/v1/stats/dashboard?interval=day&start_at=1743840000&end_at=1743926400",
+		nil,
+	)
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+}
+
 func seedUsageReports(t *testing.T, db *gorm.DB, reports []entity.UsageReport) {
 	t.Helper()
 
