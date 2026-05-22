@@ -138,19 +138,6 @@ function calculateCacheHitRate(cacheRead: number, input: number): string | null 
 }
 
 export function OverviewTopCards({ overview, previousOverview, preset, selectedRangeLabel, statusTitle, statusNote }: OverviewCardsProps) {
-  const compareLabel = getCompareLabel(preset);
-
-  const requestChange = overview && previousOverview
-    ? calculateChange(overview.totalRequests, previousOverview.totalRequests)
-    : null;
-
-  const activeClientsChange = overview && previousOverview
-    ? calculateChange(overview.activeClients, previousOverview.activeClients)
-    : null;
-
-  const activeClientsValue = overview ? formatMetricValue(overview.activeClients, 'number') : '--';
-  const totalRequestsValue = overview ? formatMetricValue(overview.totalRequests, 'number') : '--';
-
   return (
     <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
       {/* 左侧标题区域 */}
@@ -173,7 +160,7 @@ export function OverviewTopCards({ overview, previousOverview, preset, selectedR
         </div>
       </div>
 
-      {/* 右侧 2x2 卡片网格 */}
+      {/* 右侧 2x1 卡片网格 */}
       <div className="grid grid-cols-2 gap-4">
         <InfoCard
           title="当前视图"
@@ -186,23 +173,44 @@ export function OverviewTopCards({ overview, previousOverview, preset, selectedR
           note={statusNote}
           accent="bg-[linear-gradient(145deg,rgba(72,150,255,0.14),rgba(255,255,255,0.86))]"
         />
-        <SmallMetricCard
-          title="总请求数"
-          value={totalRequestsValue}
-          note="请求总数统计。"
-          change={requestChange?.change}
-          isPositive={requestChange?.isPositive}
-          compareLabel={requestChange ? compareLabel : undefined}
-        />
-        <SmallMetricCard
-          title="活跃客户端"
-          value={activeClientsValue}
-          note="活跃客户端数量。"
-          change={activeClientsChange?.change}
-          isPositive={activeClientsChange?.isPositive}
-          compareLabel={activeClientsChange ? compareLabel : undefined}
-        />
       </div>
+    </div>
+  );
+}
+
+// 导出用于系统状态区域的请求和客户端卡片
+export function RequestAndClientCards({ overview, previousOverview, preset }: { overview?: any; previousOverview?: any; preset: TimeRangePreset }) {
+  const compareLabel = getCompareLabel(preset);
+
+  const requestChange = overview && previousOverview
+    ? calculateChange(overview.totalRequests, previousOverview.totalRequests)
+    : null;
+
+  const activeClientsChange = overview && previousOverview
+    ? calculateChange(overview.activeClients, previousOverview.activeClients)
+    : null;
+
+  const activeClientsValue = overview ? formatMetricValue(overview.activeClients, 'number') : '--';
+  const totalRequestsValue = overview ? formatMetricValue(overview.totalRequests, 'number') : '--';
+
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      <SmallMetricCard
+        title="总请求数"
+        value={totalRequestsValue}
+        note="请求总数统计。"
+        change={requestChange?.change}
+        isPositive={requestChange?.isPositive}
+        compareLabel={requestChange ? compareLabel : undefined}
+      />
+      <SmallMetricCard
+        title="活跃客户端"
+        value={activeClientsValue}
+        note="活跃客户端数量。"
+        change={activeClientsChange?.change}
+        isPositive={activeClientsChange?.isPositive}
+        compareLabel={activeClientsChange ? compareLabel : undefined}
+      />
     </div>
   );
 }

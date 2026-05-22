@@ -7,7 +7,7 @@ import { CacheAnalysis } from '@/pages/Dashboard/components/CacheAnalysis';
 import { ClientRanking } from '@/pages/Dashboard/components/ClientRanking';
 import { CostTrendChart } from '@/pages/Dashboard/components/CostTrendChart';
 import { ModelRanking } from '@/pages/Dashboard/components/ModelRanking';
-import { OverviewMainCards, OverviewTopCards } from '@/pages/Dashboard/components/OverviewCards';
+import { OverviewMainCards, OverviewTopCards, RequestAndClientCards } from '@/pages/Dashboard/components/OverviewCards';
 import { RecentRequestsTable } from '@/pages/Dashboard/components/RecentRequestsTable';
 import { TokenTrendChart } from '@/pages/Dashboard/components/TokenTrendChart';
 import { formatUnixTimestamp } from '@/utils/format';
@@ -115,6 +115,14 @@ export function DashboardPage() {
                 数据加载中，正在刷新当前时间范围。
               </div>
             ) : null}
+
+            <div className="mt-4">
+              <RequestAndClientCards
+                overview={overview}
+                previousOverview={previousOverview}
+                preset={preset}
+              />
+            </div>
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div className="rounded-[24px] border border-white/80 bg-white/65 px-4 pt-3 pb-3">
