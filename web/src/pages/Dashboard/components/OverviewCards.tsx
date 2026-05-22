@@ -17,8 +17,8 @@ function PrimaryMetricCard(props: { title: string; value: string; note: string; 
       ].join(' ')}
     >
       <p className="text-xs uppercase tracking-[0.3em] text-[#6c92b4]">{props.title}</p>
-      <p className="mt-3 text-4xl font-semibold text-[#12304d] xl:text-[2.8rem]">{props.value}</p>
-      <div className="mt-2">
+      <p className="mt-4 text-4xl font-semibold text-[#12304d] xl:text-[2.8rem]">{props.value}</p>
+      <div className="mt-3">
         <p className="text-sm text-[#5f7f9e]">{props.note}</p>
         {props.change && props.compareLabel && (
           <div className="mt-1">
@@ -37,8 +37,8 @@ function SecondaryMetricCard(props: { title: string; value: string; note: string
   return (
     <article className="rounded-[28px] border border-white/80 bg-white/72 p-4 shadow-[0_18px_48px_rgba(111,153,200,0.14)] backdrop-blur-xl">
       <p className="text-xs uppercase tracking-[0.28em] text-[#6c92b4]">{props.title}</p>
-      <p className="mt-2 text-3xl font-semibold text-[#12304d]">{props.value}</p>
-      <div className="mt-1">
+      <p className="mt-3 text-3xl font-semibold text-[#12304d]">{props.value}</p>
+      <div className="mt-2">
         <p className="text-sm text-[#5f7f9e]">{props.note}</p>
         {props.change && props.compareLabel && (
           <div className="mt-1">
@@ -98,7 +98,7 @@ export function OverviewCards({ overview, previousOverview, preset }: OverviewCa
   const compareLabel = getCompareLabel(preset);
 
   return (
-    <section className="grid gap-3 xl:grid-cols-[1.28fr_1fr_0.9fr]">
+    <section className="grid gap-4 xl:grid-cols-[1.28fr_1fr_0.9fr]">
       <PrimaryMetricCard
         title="总费用"
         value={totalCost}
