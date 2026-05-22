@@ -12,13 +12,15 @@ function PrimaryMetricCard(props: { title: string; value: string; note: string; 
   return (
     <article
       className={[
-        'overflow-hidden rounded-[32px] border border-white/80 px-5 pt-4 pb-5 shadow-[0_22px_60px_rgba(111,153,200,0.16)] backdrop-blur-xl',
+        'overflow-hidden rounded-[32px] border border-white/80 px-5 pt-4 pb-5 shadow-[0_22px_60px_rgba(111,153,200,0.16)] backdrop-blur-xl flex flex-col justify-between',
         props.accent,
       ].join(' ')}
     >
-      <p className="text-xs uppercase tracking-[0.3em] text-[#6c92b4]">{props.title}</p>
-      <p className="mt-3 text-4xl font-semibold text-[#12304d] xl:text-[2.8rem]">{props.value}</p>
-      <div className="mt-2">
+      <div>
+        <p className="text-xs uppercase tracking-[0.3em] text-[#6c92b4]">{props.title}</p>
+        <p className="mt-3 text-4xl font-semibold text-[#12304d] xl:text-[2.8rem]">{props.value}</p>
+      </div>
+      <div className="mt-4">
         <p className="text-sm text-[#5f7f9e]">{props.note}</p>
         {props.change && props.compareLabel && (
           <div className="mt-1">
@@ -35,10 +37,12 @@ function PrimaryMetricCard(props: { title: string; value: string; note: string; 
 
 function SecondaryMetricCard(props: { title: string; value: string; note: string; change?: string; isPositive?: boolean; compareLabel?: string }) {
   return (
-    <article className="rounded-[28px] border border-white/80 bg-white/72 px-4 pt-3 pb-4 shadow-[0_18px_48px_rgba(111,153,200,0.14)] backdrop-blur-xl">
-      <p className="text-xs uppercase tracking-[0.28em] text-[#6c92b4]">{props.title}</p>
-      <p className="mt-2 text-3xl font-semibold text-[#12304d]">{props.value}</p>
-      <div className="mt-1">
+    <article className="rounded-[28px] border border-white/80 bg-white/72 px-4 pt-3 pb-4 shadow-[0_18px_48px_rgba(111,153,200,0.14)] backdrop-blur-xl flex flex-col justify-between">
+      <div>
+        <p className="text-xs uppercase tracking-[0.28em] text-[#6c92b4]">{props.title}</p>
+        <p className="mt-2 text-3xl font-semibold text-[#12304d]">{props.value}</p>
+      </div>
+      <div className="mt-3">
         <p className="text-sm text-[#5f7f9e]">{props.note}</p>
         {props.change && props.compareLabel && (
           <div className="mt-1">
