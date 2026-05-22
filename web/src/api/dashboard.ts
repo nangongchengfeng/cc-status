@@ -37,6 +37,7 @@ interface DashboardApiCacheAnalysis {
 
 interface DashboardApiResponse {
   overview?: DashboardApiOverview;
+  previous_overview?: DashboardApiOverview;
   trend?: DashboardApiTrendPoint[];
   top_models?: DashboardApiTopModel[];
   top_clients?: DashboardApiTopClient[];
@@ -64,6 +65,12 @@ export async function getDashboard(query: DashboardQuery): Promise<DashboardResp
       totalCostUsd: payload.overview?.total_cost_usd ?? '0',
       totalRequests: payload.overview?.total_requests ?? 0,
       activeClients: payload.overview?.active_clients ?? 0,
+    },
+    previousOverview: {
+      totalTokens: payload.previous_overview?.total_tokens ?? 0,
+      totalCostUsd: payload.previous_overview?.total_cost_usd ?? '0',
+      totalRequests: payload.previous_overview?.total_requests ?? 0,
+      activeClients: payload.previous_overview?.active_clients ?? 0,
     },
     trend: (payload.trend ?? []).map((item) => ({
       bucket: item.bucket,
