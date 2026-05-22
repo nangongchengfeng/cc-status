@@ -18,11 +18,12 @@ function renderApp() {
 }
 
 describe('DashboardPage', () => {
-  it('在根路由渲染仪表盘页头和卡片骨架', () => {
+  it('在根路由渲染静态复刻页面的关键模块', () => {
     renderApp();
 
     expect(screen.getByRole('heading', { name: 'Claude 用量看板' })).toBeInTheDocument();
-    expect(screen.getByText('先把今天花在哪看明白')).toBeInTheDocument();
-    expect(screen.getByText('总 Token')).toBeInTheDocument();
+    expect(screen.getByText('核心指标')).toBeInTheDocument();
+    expect(screen.getByText('综合效益')).toBeInTheDocument();
+    expect(screen.getByText('最近请求')).toBeInTheDocument();
   });
 });
