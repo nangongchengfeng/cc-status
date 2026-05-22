@@ -8,6 +8,11 @@ describe('format helpers', () => {
     expect(formatMetricValue(1234567, 'number')).toBe('1,234,567');
   });
 
+  it('数值缺失或非法时返回占位符，避免页面崩溃', () => {
+    expect(formatMetricValue(undefined, 'currency')).toBe('--');
+    expect(formatMetricValue('not-a-number', 'number')).toBe('--');
+  });
+
   it('把趋势桶格式化成适合 tooltip 的标签', () => {
     expect(formatBucketLabel('2026-05-22T10:00:00+08:00', 'hour')).toBe('05-22 10:00');
     expect(formatBucketLabel('2026-05-22T00:00:00+08:00', 'day')).toBe('05-22');
@@ -20,6 +25,10 @@ describe('format helpers', () => {
 
   it('最近请求时间统一格式化为上海时区', () => {
     expect(formatRecentRequestTime(1747879200)).toBe('2025-05-22 10:00');
+  });
+
+  it('最近请求时间无效时返回占位符，避免页面崩溃', () => {
+    expect(formatRecentRequestTime(Number.NaN)).toBe('--');
   });
 
   it('长标签会被统一截断，避免撑坏布局', () => {

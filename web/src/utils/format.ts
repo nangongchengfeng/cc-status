@@ -1,12 +1,32 @@
 import type { DashboardInterval } from '@/types/dashboard';
 
-export function formatMetricValue(value: number | string, type: 'number' | 'currency') {
-  if (type === 'currency') {
-    const numericValue = typeof value === 'string' ? Number(value) : value;
-    return `$${numericValue.toFixed(2)}`;
+function toFiniteNumber(value: number | string | null | undefined) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value === 'string' && value.trim() === '') {
+    return null;
   }
 
   const numericValue = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(numericValue)) {
+    return null;
+  }
+
+  return numericValue;
+}
+
+export function formatMetricValue(value: number | string | null | undefined, type: 'number' | 'currency') {
+  const numericValue = toFiniteNumber(value);
+  if (numericValue === null) {
+    return '--';
+  }
+
+  if (type === 'currency') {
+    return `$${numericValue.toFixed(2)}`;
+  }
+
   return new Intl.NumberFormat('en-US').format(numericValue);
 }
 
@@ -28,6 +48,11 @@ export function getModelDisplayName(model: { displayName?: string; model: string
 }
 
 export function formatRecentRequestTime(createdAt: number) {
+  const date = new Date(createdAt * 1000);
+  if (Number.isNaN(date.getTime())) {
+    return '--';
+  }
+
   const formatter = new Intl.DateTimeFormat('zh-CN', {
     timeZone: 'Asia/Shanghai',
     year: 'numeric',
@@ -39,7 +64,7 @@ export function formatRecentRequestTime(createdAt: number) {
   });
 
   // 大屏时间口径统一固定到上海时区，避免浏览器所在时区影响展示。
-  const parts = formatter.formatToParts(new Date(createdAt * 1000));
+  const parts = formatter.formatToParts(date);
   const valueByType = Object.fromEntries(parts.filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]));
 
   return `${valueByType.year}-${valueByType.month}-${valueByType.day} ${valueByType.hour}:${valueByType.minute}`;

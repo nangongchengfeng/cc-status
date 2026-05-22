@@ -1,8 +1,50 @@
-﻿import { http } from '@/api/http';
+import { http } from '@/api/http';
 import type { DashboardQuery, DashboardResponse } from '@/types/dashboard';
 
+interface DashboardApiOverview {
+  total_tokens?: number;
+  total_cost_usd?: string;
+  total_requests?: number;
+  active_clients?: number;
+}
+
+interface DashboardApiTrendPoint {
+  bucket: string;
+  input_tokens?: number;
+  output_tokens?: number;
+  cache_read_tokens?: number;
+  cache_creation_tokens?: number;
+  total_requests?: number;
+  total_cost_usd?: string;
+}
+
+interface DashboardApiTopModel {
+  model: string;
+  display_name?: string;
+  total_tokens?: number;
+}
+
+interface DashboardApiTopClient {
+  client_id: string;
+  total_cost_usd?: string;
+}
+
+interface DashboardApiCacheAnalysis {
+  saved_cost_usd?: string;
+  cache_read_cost_usd?: string;
+  cache_creation_cost_usd?: string;
+}
+
+interface DashboardApiResponse {
+  overview?: DashboardApiOverview;
+  trend?: DashboardApiTrendPoint[];
+  top_models?: DashboardApiTopModel[];
+  top_clients?: DashboardApiTopClient[];
+  cache_analysis?: DashboardApiCacheAnalysis;
+}
+
 interface DashboardEnvelope {
-  data: DashboardResponse;
+  data: DashboardApiResponse;
 }
 
 export async function getDashboard(query: DashboardQuery): Promise<DashboardResponse> {
@@ -14,5 +56,37 @@ export async function getDashboard(query: DashboardQuery): Promise<DashboardResp
     },
   });
 
-  return response.data.data;
+  const payload = response.data.data;
+
+  return {
+    overview: {
+      totalTokens: payload.overview?.total_tokens ?? 0,
+      totalCostUsd: payload.overview?.total_cost_usd ?? '0',
+      totalRequests: payload.overview?.total_requests ?? 0,
+      activeClients: payload.overview?.active_clients ?? 0,
+    },
+    trend: (payload.trend ?? []).map((item) => ({
+      bucket: item.bucket,
+      inputTokens: item.input_tokens ?? 0,
+      outputTokens: item.output_tokens ?? 0,
+      cacheReadTokens: item.cache_read_tokens ?? 0,
+      cacheCreationTokens: item.cache_creation_tokens ?? 0,
+      totalRequests: item.total_requests ?? 0,
+      totalCostUsd: item.total_cost_usd ?? '0',
+    })),
+    topModels: (payload.top_models ?? []).map((item) => ({
+      model: item.model,
+      displayName: item.display_name ?? '',
+      totalTokens: item.total_tokens ?? 0,
+    })),
+    topClients: (payload.top_clients ?? []).map((item) => ({
+      clientId: item.client_id,
+      totalCostUsd: item.total_cost_usd ?? '0',
+    })),
+    cacheAnalysis: {
+      savedCostUsd: payload.cache_analysis?.saved_cost_usd ?? '0',
+      cacheReadCostUsd: payload.cache_analysis?.cache_read_cost_usd ?? '0',
+      cacheCreationCostUsd: payload.cache_analysis?.cache_creation_cost_usd ?? '0',
+    },
+  };
 }
