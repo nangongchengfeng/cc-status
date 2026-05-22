@@ -871,11 +871,252 @@ func TestStatsDashboardRouteSupportsDayInterval(t *testing.T) {
 	}
 }
 
+func TestStatsDashboardRouteReturnsTopModelsWithDisplayName(t *testing.T) {
+	t.Parallel()
+
+	location, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		t.Fatalf("LoadLocation() returned error: %v", err)
+	}
+
+	dbPath := filepath.Join(t.TempDir(), "server.db")
+	db, err := repository.OpenDatabase(dbPath)
+	if err != nil {
+		t.Fatalf("OpenDatabase() returned error: %v", err)
+	}
+	if err := repository.InitializeSchema(db); err != nil {
+		t.Fatalf("InitializeSchema() returned error: %v", err)
+	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("DB() returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = sqlDB.Close()
+	})
+
+	seedModelPricings(t, db, []entity.ModelPricing{
+		{
+			ModelID:                     "alpha",
+			DisplayName:                 "Alpha Display",
+			InputCostPerMillion:         "1",
+			OutputCostPerMillion:        "1",
+			CacheReadCostPerMillion:     "0.1",
+			CacheCreationCostPerMillion: "0.2",
+		},
+		{
+			ModelID:                     "gamma",
+			DisplayName:                 "Gamma Display",
+			InputCostPerMillion:         "1",
+			OutputCostPerMillion:        "1",
+			CacheReadCostPerMillion:     "0.1",
+			CacheCreationCostPerMillion: "0.2",
+		},
+	})
+
+	seedUsageReports(t, db, []entity.UsageReport{
+		{
+			ClientID:            "client-1",
+			RequestID:           "model-rank-1",
+			AppType:             "claude",
+			Model:               "alpha",
+			InputTokens:         30,
+			OutputTokens:        10,
+			CacheReadTokens:     5,
+			CacheCreationTokens: 5,
+			PricingSource:       "exact",
+			CreatedAtUnix:       time.Date(2026, 5, 21, 10, 0, 0, 0, location).Unix(),
+			DataSource:          "session_log",
+			TotalCostUSD:        "2",
+		},
+		{
+			ClientID:            "client-2",
+			RequestID:           "model-rank-2",
+			AppType:             "claude",
+			Model:               "beta",
+			InputTokens:         20,
+			OutputTokens:        10,
+			CacheReadTokens:     10,
+			CacheCreationTokens: 5,
+			PricingSource:       "exact",
+			CreatedAtUnix:       time.Date(2026, 5, 21, 11, 0, 0, 0, location).Unix(),
+			DataSource:          "session_log",
+			TotalCostUSD:        "1.5",
+		},
+		{
+			ClientID:            "client-3",
+			RequestID:           "model-rank-3",
+			AppType:             "claude",
+			Model:               "gamma",
+			InputTokens:         20,
+			OutputTokens:        10,
+			CacheReadTokens:     10,
+			CacheCreationTokens: 5,
+			PricingSource:       "exact",
+			CreatedAtUnix:       time.Date(2026, 5, 21, 12, 0, 0, 0, location).Unix(),
+			DataSource:          "session_log",
+			TotalCostUSD:        "1.4",
+		},
+	})
+
+	startAt := time.Date(2026, 5, 21, 10, 0, 0, 0, location).Unix()
+	endAt := time.Date(2026, 5, 21, 12, 0, 0, 0, location).Unix()
+
+	router := newTestStatsRouter(t, db)
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/api/v1/stats/dashboard?interval=hour&start_at="+formatUnix(startAt)+"&end_at="+formatUnix(endAt),
+		nil,
+	)
+	request.Header.Set("Authorization", "Bearer secret-token")
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+
+	var response struct {
+		Data struct {
+			TopModels []struct {
+				Model       string `json:"model"`
+				DisplayName string `json:"display_name"`
+				TotalTokens int64  `json:"total_tokens"`
+			} `json:"top_models"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Unmarshal() returned error: %v", err)
+	}
+
+	if len(response.Data.TopModels) != 3 {
+		t.Fatalf("expected 3 top models, got %d", len(response.Data.TopModels))
+	}
+
+	expected := []struct {
+		model       string
+		displayName string
+		totalTokens int64
+	}{
+		{model: "alpha", displayName: "Alpha Display", totalTokens: 50},
+		{model: "beta", displayName: "", totalTokens: 45},
+		{model: "gamma", displayName: "Gamma Display", totalTokens: 45},
+	}
+	for index, expectedModel := range expected {
+		actual := response.Data.TopModels[index]
+		if actual.Model != expectedModel.model || actual.DisplayName != expectedModel.displayName || actual.TotalTokens != expectedModel.totalTokens {
+			t.Fatalf("unexpected top model at %d: %+v", index, actual)
+		}
+	}
+}
+
+func TestStatsDashboardRouteTopModelsUseStableTieBreak(t *testing.T) {
+	t.Parallel()
+
+	location, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		t.Fatalf("LoadLocation() returned error: %v", err)
+	}
+
+	dbPath := filepath.Join(t.TempDir(), "server.db")
+	db, err := repository.OpenDatabase(dbPath)
+	if err != nil {
+		t.Fatalf("OpenDatabase() returned error: %v", err)
+	}
+	if err := repository.InitializeSchema(db); err != nil {
+		t.Fatalf("InitializeSchema() returned error: %v", err)
+	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("DB() returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = sqlDB.Close()
+	})
+
+	seedUsageReports(t, db, []entity.UsageReport{
+		{
+			ClientID:      "client-1",
+			RequestID:     "model-tie-1",
+			AppType:       "claude",
+			Model:         "zeta",
+			InputTokens:   20,
+			OutputTokens:  10,
+			PricingSource: "exact",
+			CreatedAtUnix: time.Date(2026, 5, 21, 10, 0, 0, 0, location).Unix(),
+			DataSource:    "session_log",
+			TotalCostUSD:  "1",
+		},
+		{
+			ClientID:      "client-2",
+			RequestID:     "model-tie-2",
+			AppType:       "claude",
+			Model:         "alpha",
+			InputTokens:   15,
+			OutputTokens:  15,
+			PricingSource: "exact",
+			CreatedAtUnix: time.Date(2026, 5, 21, 11, 0, 0, 0, location).Unix(),
+			DataSource:    "session_log",
+			TotalCostUSD:  "1",
+		},
+	})
+
+	startAt := time.Date(2026, 5, 21, 10, 0, 0, 0, location).Unix()
+	endAt := time.Date(2026, 5, 21, 11, 0, 0, 0, location).Unix()
+
+	router := newTestStatsRouter(t, db)
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/api/v1/stats/dashboard?interval=hour&start_at="+formatUnix(startAt)+"&end_at="+formatUnix(endAt),
+		nil,
+	)
+	request.Header.Set("Authorization", "Bearer secret-token")
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d with body %s", recorder.Code, recorder.Body.String())
+	}
+
+	var response struct {
+		Data struct {
+			TopModels []struct {
+				Model       string `json:"model"`
+				TotalTokens int64  `json:"total_tokens"`
+			} `json:"top_models"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Unmarshal() returned error: %v", err)
+	}
+
+	if len(response.Data.TopModels) != 2 {
+		t.Fatalf("expected 2 top models, got %d", len(response.Data.TopModels))
+	}
+	if response.Data.TopModels[0].Model != "alpha" || response.Data.TopModels[1].Model != "zeta" {
+		t.Fatalf("unexpected stable order: %+v", response.Data.TopModels)
+	}
+}
+
 func seedUsageReports(t *testing.T, db *gorm.DB, reports []entity.UsageReport) {
 	t.Helper()
 
 	for _, report := range reports {
 		if err := db.Create(&report).Error; err != nil {
+			t.Fatalf("Create() returned error: %v", err)
+		}
+	}
+}
+
+func seedModelPricings(t *testing.T, db *gorm.DB, pricings []entity.ModelPricing) {
+	t.Helper()
+
+	for _, pricing := range pricings {
+		if err := db.Create(&pricing).Error; err != nil {
 			t.Fatalf("Create() returned error: %v", err)
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"math/big"
 	"sort"
+	"strings"
 	"time"
 
 	"cc-status/server/internal/model/dto"
@@ -18,17 +19,24 @@ type UsageReportReader interface {
 	List(context.Context, *gorm.DB) ([]entity.UsageReport, error)
 }
 
+// StatsModelPricingReader 定义仪表盘统计读取模型展示名所需的最小能力。
+type StatsModelPricingReader interface {
+	List(context.Context, *gorm.DB) ([]entity.ModelPricing, error)
+}
+
 // StatsService 承载总览、趋势与仪表盘统计能力。
 type StatsService struct {
-	db     *gorm.DB
-	reader UsageReportReader
+	db            *gorm.DB
+	reader        UsageReportReader
+	pricingReader StatsModelPricingReader
 }
 
 // NewStatsService 创建统计服务。
 func NewStatsService(db *gorm.DB) *StatsService {
 	return &StatsService{
-		db:     db,
-		reader: repository.NewUsageReportRepository(),
+		db:            db,
+		reader:        repository.NewUsageReportRepository(),
+		pricingReader: repository.NewModelPricingRepository(),
 	}
 }
 
@@ -90,6 +98,10 @@ func (service *StatsService) Dashboard(
 	if err != nil {
 		return dto.StatsDashboardResponse{}, err
 	}
+	pricings, err := service.pricingReader.List(ctx, service.db)
+	if err != nil {
+		return dto.StatsDashboardResponse{}, err
+	}
 
 	step := time.Hour
 	if query.Interval == "day" {
@@ -111,6 +123,7 @@ func (service *StatsService) Dashboard(
 
 	activeClients := make(map[string]struct{})
 	buckets := make(map[time.Time]*dashboardAggregate)
+	modelTokens := make(map[string]int64)
 	totalCost := new(big.Rat)
 
 	var totalTokens int64
@@ -126,6 +139,7 @@ func (service *StatsService) Dashboard(
 		totalTokens += tokenCount
 		totalRequests++
 		activeClients[report.ClientID] = struct{}{}
+		modelTokens[report.Model] += tokenCount
 		totalCost.Add(totalCost, parseDecimal(report.TotalCostUSD))
 
 		bucketTime := truncateTrendTime(reportTime, query.Interval)
@@ -167,6 +181,13 @@ func (service *StatsService) Dashboard(
 		}
 	}
 
+	displayNames := make(map[string]string)
+	for _, pricing := range pricings {
+		displayNames[strings.ToLower(pricing.ModelID)] = pricing.DisplayName
+	}
+
+	topModels := buildDashboardTopModels(modelTokens, displayNames)
+
 	return dto.StatsDashboardResponse{
 		Overview: dto.StatsDashboardOverview{
 			TotalTokens:   totalTokens,
@@ -175,7 +196,7 @@ func (service *StatsService) Dashboard(
 			ActiveClients: int64(len(activeClients)),
 		},
 		Trend:      trend,
-		TopModels:  []dto.StatsDashboardModelRank{},
+		TopModels:  topModels,
 		TopClients: []dto.StatsClientRank{},
 		CacheAnalysis: dto.StatsDashboardCacheAnalysis{
 			SavedCostUSD:         "0.0000000000",
@@ -183,6 +204,32 @@ func (service *StatsService) Dashboard(
 			CacheCreationCostUSD: "0.0000000000",
 		},
 	}, nil
+}
+
+func buildDashboardTopModels(
+	modelTokens map[string]int64,
+	displayNames map[string]string,
+) []dto.StatsDashboardModelRank {
+	items := make([]dto.StatsDashboardModelRank, 0, len(modelTokens))
+	for model, totalTokens := range modelTokens {
+		items = append(items, dto.StatsDashboardModelRank{
+			Model:       model,
+			DisplayName: displayNames[strings.ToLower(model)],
+			TotalTokens: totalTokens,
+		})
+	}
+
+	sort.Slice(items, func(left int, right int) bool {
+		if items[left].TotalTokens == items[right].TotalTokens {
+			return items[left].Model < items[right].Model
+		}
+		return items[left].TotalTokens > items[right].TotalTokens
+	})
+
+	if len(items) > 10 {
+		return items[:10]
+	}
+	return items
 }
 
 // Trend 按指定粒度返回基于业务时间的趋势统计结果，并补零缺失时间桶。
