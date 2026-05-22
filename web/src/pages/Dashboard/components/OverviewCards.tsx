@@ -50,9 +50,9 @@ function SmallMetricCard(props: { title: string; value: string; note: string; ch
   return (
     <article className={[
         props.compact
-          ? 'rounded-[20px] border border-white/80 bg-white/72 px-3 pt-2 pb-3 shadow-[0_12px_32px_rgba(111,153,200,0.14)] backdrop-blur-xl flex flex-col justify-between'
-          : 'rounded-[28px] border border-white/80 bg-white/72 px-4 pt-3 pb-4 shadow-[0_18px_48px_rgba(111,153,200,0.14)] backdrop-blur-xl flex flex-col justify-between',
-        props.accent,
+          ? 'rounded-[20px] border border-white/80 px-3 pt-2 pb-3 shadow-[0_12px_32px_rgba(111,153,200,0.14)] backdrop-blur-xl flex flex-col justify-between'
+          : 'rounded-[28px] border border-white/80 px-4 pt-3 pb-4 shadow-[0_18px_48px_rgba(111,153,200,0.14)] backdrop-blur-xl flex flex-col justify-between',
+        props.accent || 'bg-white/72',
       ].join(' ')}
     >
       <div>
@@ -88,11 +88,11 @@ function InfoCard(props: { title: string; value: string; note: string; accent?: 
   return (
     <article className={[
         props.extraCompact
-          ? 'rounded-[20px] border border-white/80 bg-white/72 px-3 py-8 shadow-[0_12px_32px_rgba(112,151,194,0.16)] backdrop-blur-xl'
+          ? 'rounded-[20px] border border-white/80 px-3 py-8 shadow-[0_12px_32px_rgba(112,151,194,0.16)] backdrop-blur-xl'
           : props.compact
-          ? 'rounded-[20px] border border-white/80 bg-white/72 px-3 pt-2 pb-3 shadow-[0_12px_32px_rgba(112,151,194,0.16)] backdrop-blur-xl flex flex-col justify-between'
-          : 'rounded-[28px] border border-white/80 bg-white/72 px-4 pt-3 pb-4 shadow-[0_16px_40px_rgba(112,151,194,0.16)] backdrop-blur-xl flex flex-col justify-between',
-        props.accent,
+          ? 'rounded-[20px] border border-white/80 px-3 pt-2 pb-3 shadow-[0_12px_32px_rgba(112,151,194,0.16)] backdrop-blur-xl flex flex-col justify-between'
+          : 'rounded-[28px] border border-white/80 px-4 pt-3 pb-4 shadow-[0_16px_40px_rgba(112,151,194,0.16)] backdrop-blur-xl flex flex-col justify-between',
+        props.accent || 'bg-white/72',
       ].join(' ')}
     >
       <p className={props.extraCompact ? 'text-[10px] uppercase tracking-[0.24em] text-[#6b93b5]' : props.compact ? 'text-[10px] uppercase tracking-[0.24em] text-[#6b93b5]' : 'text-xs uppercase tracking-[0.28em] text-[#6b93b5]'}>{props.title}</p>
@@ -175,13 +175,14 @@ export function OverviewTopCards({ overview, previousOverview, preset, selectedR
           title="当前视图"
           value={selectedRangeLabel}
           note="切换时间范围将刷新页面数据。"
+          accent="bg-[linear-gradient(145deg,rgba(147,197,253,0.25),rgba(255,255,255,0.9))]"
         />
         <InfoCard
           extraCompact
           title="状态快照"
           value={statusTitle}
           note={statusNote}
-          accent="bg-[linear-gradient(145deg,rgba(72,150,255,0.14),rgba(255,255,255,0.86))]"
+          accent="bg-[linear-gradient(145deg,rgba(196,181,253,0.25),rgba(255,255,255,0.9))]"
         />
       </div>
     </div>
@@ -212,6 +213,7 @@ export function RequestAndClientCards({ overview, previousOverview, preset }: { 
         change={requestChange?.change}
         isPositive={requestChange?.isPositive}
         compareLabel={requestChange ? compareLabel : undefined}
+        accent="bg-[linear-gradient(145deg,rgba(165,180,252,0.25),rgba(255,255,255,0.9))]"
       />
       <SmallMetricCard
         title="活跃客户端"
@@ -220,6 +222,7 @@ export function RequestAndClientCards({ overview, previousOverview, preset }: { 
         change={activeClientsChange?.change}
         isPositive={activeClientsChange?.isPositive}
         compareLabel={activeClientsChange ? compareLabel : undefined}
+        accent="bg-[linear-gradient(145deg,rgba(251,182,206,0.25),rgba(255,255,255,0.9))]"
       />
     </div>
   );
@@ -300,6 +303,7 @@ export function OverviewMainCards({ overview, previousOverview, preset }: Overvi
           change={inputChange?.change}
           isPositive={inputChange?.isPositive}
           compareLabel={inputChange ? compareLabel : undefined}
+          accent="bg-[linear-gradient(145deg,rgba(129,230,217,0.25),rgba(255,255,255,0.9))]"
         />
         <SmallMetricCard
           compact
@@ -311,6 +315,7 @@ export function OverviewMainCards({ overview, previousOverview, preset }: Overvi
           change={outputChange?.change}
           isPositive={outputChange?.isPositive}
           compareLabel={outputChange ? compareLabel : undefined}
+          accent="bg-[linear-gradient(145deg,rgba(253,186,116,0.25),rgba(255,255,255,0.9))]"
         />
       </div>
     </div>
