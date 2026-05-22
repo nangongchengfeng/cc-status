@@ -175,14 +175,14 @@ export function OverviewTopCards({ overview, previousOverview, preset, selectedR
           title="当前视图"
           value={selectedRangeLabel}
           note="切换时间范围将刷新页面数据。"
-          accent="bg-[linear-gradient(145deg,rgba(147,197,253,0.25),rgba(255,255,255,0.9))]"
+          accent="bg-[linear-gradient(145deg,rgba(180,210,240,0.18),rgba(255,255,255,0.92))]"
         />
         <InfoCard
           extraCompact
           title="状态快照"
           value={statusTitle}
           note={statusNote}
-          accent="bg-[linear-gradient(145deg,rgba(196,181,253,0.25),rgba(255,255,255,0.9))]"
+          accent="bg-[linear-gradient(145deg,rgba(165,180,220,0.15),rgba(255,255,255,0.92))]"
         />
       </div>
     </div>
@@ -213,7 +213,7 @@ export function RequestAndClientCards({ overview, previousOverview, preset }: { 
         change={requestChange?.change}
         isPositive={requestChange?.isPositive}
         compareLabel={requestChange ? compareLabel : undefined}
-        accent="bg-[linear-gradient(145deg,rgba(165,180,252,0.25),rgba(255,255,255,0.9))]"
+        accent="bg-[linear-gradient(145deg,rgba(150,190,230,0.20),rgba(255,255,255,0.92))]"
       />
       <SmallMetricCard
         title="活跃客户端"
@@ -222,7 +222,7 @@ export function RequestAndClientCards({ overview, previousOverview, preset }: { 
         change={activeClientsChange?.change}
         isPositive={activeClientsChange?.isPositive}
         compareLabel={activeClientsChange ? compareLabel : undefined}
-        accent="bg-[linear-gradient(145deg,rgba(251,182,206,0.25),rgba(255,255,255,0.9))]"
+        accent="bg-[linear-gradient(145deg,rgba(170,200,240,0.15),rgba(255,255,255,0.92))]"
       />
     </div>
   );
@@ -275,7 +275,7 @@ export function OverviewMainCards({ overview, previousOverview, preset }: Overvi
         unit={totalTokensDisplay.unit}
         secondaryValue={totalTokensDisplay.secondary}
         note="优先展示用量数据。"
-        accent="bg-[linear-gradient(145deg,rgba(181,224,255,0.68),rgba(255,255,255,0.92))]"
+        accent="bg-[linear-gradient(145deg,rgba(150,200,240,0.45),rgba(255,255,255,0.92))]"
         change={tokenChange?.change}
         isPositive={tokenChange?.isPositive}
         compareLabel={tokenChange ? compareLabel : undefined}
@@ -286,7 +286,7 @@ export function OverviewMainCards({ overview, previousOverview, preset }: Overvi
         unit={totalCacheTokensDisplay.unit}
         secondaryValue={totalCacheTokensDisplay.secondary}
         note="缓存 Token 统计。"
-        accent="bg-[linear-gradient(145deg,rgba(134,239,172,0.35),rgba(255,255,255,0.9))]"
+        accent="bg-[linear-gradient(145deg,rgba(120,210,200,0.25),rgba(255,255,255,0.92))]"
         change={cacheHitRate ?? undefined}
         isPositive={true}
         compareLabel={cacheHitRate ? '缓存命中率' : undefined}
@@ -303,7 +303,7 @@ export function OverviewMainCards({ overview, previousOverview, preset }: Overvi
           change={inputChange?.change}
           isPositive={inputChange?.isPositive}
           compareLabel={inputChange ? compareLabel : undefined}
-          accent="bg-[linear-gradient(145deg,rgba(129,230,217,0.25),rgba(255,255,255,0.9))]"
+          accent="bg-[linear-gradient(145deg,rgba(140,200,220,0.20),rgba(255,255,255,0.92))]"
         />
         <SmallMetricCard
           compact
@@ -315,7 +315,7 @@ export function OverviewMainCards({ overview, previousOverview, preset }: Overvi
           change={outputChange?.change}
           isPositive={outputChange?.isPositive}
           compareLabel={outputChange ? compareLabel : undefined}
-          accent="bg-[linear-gradient(145deg,rgba(253,186,116,0.25),rgba(255,255,255,0.9))]"
+          accent="bg-[linear-gradient(145deg,rgba(220,200,190,0.12),rgba(255,255,255,0.92))]"
         />
       </div>
     </div>
