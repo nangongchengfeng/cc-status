@@ -42,8 +42,11 @@ func NewBootstrapRunner(options BootstrapOptions) Runner {
 		}
 		defer state.Close()
 
+		stdout := stdoutOrDefault(options.Stdout)
+		_, _ = fmt.Fprintf(stdout, "[初始化] 客户端: %s\n", state.ClientID)
+
 		if command != "dry-run" {
-			return runSync(state, options, stdoutOrDefault(options.Stdout))
+			return runSync(state, options, stdout)
 		}
 
 		projectsDir, err := resolveClaudeProjectsDir(options.ClaudeProjectsDir)
@@ -51,12 +54,11 @@ func NewBootstrapRunner(options BootstrapOptions) Runner {
 			return err
 		}
 
+		_, _ = fmt.Fprintln(stdout, "[扫描] 正在扫描 Claude 使用记录...")
 		result, err := claude.ScanProjectsDir(projectsDir)
 		if err != nil {
 			return err
 		}
-
-		stdout := stdoutOrDefault(options.Stdout)
 
 		_, err = fmt.Fprintf(
 			stdout,
@@ -111,10 +113,12 @@ func runSync(state *runtime.State, options BootstrapOptions, stdout io.Writer) e
 		return err
 	}
 
+	_, _ = fmt.Fprintln(stdout, "[扫描] 正在扫描 Claude 使用记录...")
 	fileResults, err := claude.ScanProjectFiles(projectsDir)
 	if err != nil {
 		return err
 	}
+	_, _ = fmt.Fprintf(stdout, "[扫描] 完成, 共扫描 %d 个文件\n", len(fileResults))
 
 	syncClient := httpclient.NewSyncClient(
 		state.Config.ServerURL,
@@ -127,6 +131,7 @@ func runSync(state *runtime.State, options BootstrapOptions, stdout io.Writer) e
 		syncClient,
 		fileResults,
 		state.Config.BatchSize,
+		stdout,
 	)
 	if err != nil {
 		return err

@@ -2,6 +2,7 @@ package syncer
 
 import (
 	"fmt"
+	"io"
 
 	"cc-status/client/internal/claude"
 	"cc-status/client/internal/httpclient"
@@ -22,6 +23,7 @@ func RunHappyPath(
 	syncClient *httpclient.SyncClient,
 	fileResults []claude.FileScanResult,
 	batchSize int,
+	progress io.Writer,
 ) (Result, error) {
 	result := Result{
 		FilesScanned: len(fileResults),
@@ -68,11 +70,19 @@ func RunHappyPath(
 	}
 
 	if len(reports) == 0 {
+		if progress != nil {
+			_, _ = fmt.Fprintf(progress, "[同步] 无新记录, 已跳过 %d 条已上报记录\n", result.Skipped)
+		}
 		return result, nil
 	}
 
 	result.Records = len(reports)
 
+	if progress != nil {
+		_, _ = fmt.Fprintf(progress, "[同步] %d 条待上报 (已跳过 %d 条已同步)\n", len(reports), result.Skipped)
+	}
+
+	totalBatches := (len(reports) + batchSize - 1) / batchSize
 	for start := 0; start < len(reports); start += batchSize {
 		end := start + batchSize
 		if end > len(reports) {
@@ -100,7 +110,6 @@ func RunHappyPath(
 
 			fileResult := filesByRequestID[report.RequestID]
 			pendingByFile[fileResult.FilePath]--
-			// 只有该文件当前轮次所有“未上报记录”都确认成功后，才推进它的 sync_state。
 			if pendingByFile[fileResult.FilePath] == 0 {
 				if err := store.UpdateSyncState(fileResult.FilePath, fileResult.LastModifiedNanos, fileResult.LastLineOffset); err != nil {
 					return result, err
@@ -110,6 +119,12 @@ func RunHappyPath(
 
 		result.Accepted += response.AcceptedCount
 		result.Skipped += response.DuplicateCount
+
+		if progress != nil {
+			batchNum := start/batchSize + 1
+			_, _ = fmt.Fprintf(progress, "[同步] 批次 %d/%d: 上报 %d 条 -> 成功 %d 条\n",
+				batchNum, totalBatches, len(batch), response.AcceptedCount)
+		}
 	}
 
 	return result, nil
