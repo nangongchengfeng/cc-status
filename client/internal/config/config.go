@@ -14,6 +14,7 @@ type Config struct {
 	AuthToken      string `yaml:"auth_token"`
 	BatchSize      int    `yaml:"batch_size"`
 	TimeoutSeconds int    `yaml:"timeout_seconds"`
+	ClientName     string `yaml:"client_name"`
 }
 
 func Load(appDir string, envLookup func(string) string) (Config, error) {
@@ -36,6 +37,7 @@ func Load(appDir string, envLookup func(string) string) (Config, error) {
 
 	overrideString(envLookup, "CC_USAGE_CLIENT_SERVER_URL", &cfg.ServerURL)
 	overrideString(envLookup, "CC_USAGE_CLIENT_AUTH_TOKEN", &cfg.AuthToken)
+	overrideString(envLookup, "CC_USAGE_CLIENT_CLIENT_NAME", &cfg.ClientName)
 	if err := overrideInt(envLookup, "CC_USAGE_CLIENT_BATCH_SIZE", &cfg.BatchSize); err != nil {
 		return Config{}, err
 	}

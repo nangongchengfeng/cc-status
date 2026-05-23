@@ -9,3 +9,6 @@ batch_size: 500
 
 # 单次 HTTP 请求超时时间，单位为秒。
 timeout_seconds: 30
+
+# 客户端名称（可选），设置后会替代自动生成的 UUID
+client_name: ""

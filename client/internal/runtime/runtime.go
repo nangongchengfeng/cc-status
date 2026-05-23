@@ -41,10 +41,15 @@ func Bootstrap(options Options) (*State, error) {
 		return nil, err
 	}
 
-	clientID, err := store.LoadOrCreateClientID()
-	if err != nil {
-		_ = store.Close()
-		return nil, err
+	var clientID string
+	if cfg.ClientName != "" {
+		clientID = cfg.ClientName
+	} else {
+		clientID, err = store.LoadOrCreateClientID()
+		if err != nil {
+			_ = store.Close()
+			return nil, err
+		}
 	}
 
 	return &State{
