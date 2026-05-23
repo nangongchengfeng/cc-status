@@ -34,10 +34,16 @@
 
 ## 构建与运行
 
-在 `client` 目录下执行：
+在仓库根目录执行：
 
 ```bash
+# 构建
+cd client
 go build ./cmd/cc-usage-client
+
+# 或者直接运行
+go run ./cmd/cc-usage-client dry-run
+go run ./cmd/cc-usage-client sync
 ```
 
 本地预演扫描：
@@ -59,15 +65,8 @@ go run ./cmd/cc-usage-client sync
 可以先复制仓库里的示例模板：
 
 ```bash
-# Linux / macOS
 mkdir -p ~/.cc-usage-client
-cp ./config.example.yaml ~/.cc-usage-client/config.yaml
-```
-
-```powershell
-# Windows PowerShell
-New-Item -ItemType Directory -Force -Path "$HOME/.cc-usage-client" | Out-Null
-Copy-Item .\config.example.yaml "$HOME/.cc-usage-client/config.yaml"
+cp ./client/config.example.yaml ~/.cc-usage-client/config.yaml
 ```
 
 配置字段说明：
@@ -93,13 +92,7 @@ Copy-Item .\config.example.yaml "$HOME/.cc-usage-client/config.yaml"
 ```bash
 export CC_USAGE_CLIENT_SERVER_URL="https://usage.example.com"
 export CC_USAGE_CLIENT_AUTH_TOKEN="your-token"
-go run ./cmd/cc-usage-client sync
-```
-
-```powershell
-$env:CC_USAGE_CLIENT_SERVER_URL = "https://usage.example.com"
-$env:CC_USAGE_CLIENT_AUTH_TOKEN = "your-token"
-go run ./cmd/cc-usage-client sync
+go run ./client/cmd/cc-usage-client sync
 ```
 
 ## 输出样例
@@ -169,5 +162,6 @@ session:<message_id>
 在 `client` 目录执行：
 
 ```bash
+cd client
 go test ./...
 ```

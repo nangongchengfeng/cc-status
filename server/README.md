@@ -11,10 +11,10 @@
 
 在仓库根目录执行：
 
-```powershell
-$env:CC_USAGE_SERVER_AUTH_TOKEN = "dev-token"
-$env:CC_USAGE_SERVER_LISTEN_ADDR = ":8080"
-$env:CC_USAGE_SERVER_SQLITE_PATH = ".\server\data\server.db"
+```bash
+export CC_USAGE_SERVER_AUTH_TOKEN="dev-token"
+export CC_USAGE_SERVER_LISTEN_ADDR=":8080"
+export CC_USAGE_SERVER_SQLITE_PATH="./server/data/server.db"
 go run ./server/cmd/server
 ```
 
@@ -28,19 +28,17 @@ go run ./server/cmd/server
 
 健康检查：
 
-```powershell
+```bash
 curl http://127.0.0.1:8080/healthz
 ```
 
 写入一条最小同步记录：
 
-```powershell
-$headers = @{
-  Authorization = "Bearer dev-token"
-  "Content-Type" = "application/json"
-}
-
-$body = @'
+```bash
+curl -X POST http://127.0.0.1:8080/api/v1/sync \
+  -H "Authorization: Bearer dev-token" \
+  -H "Content-Type: application/json" \
+  -d @- <<'EOF'
 {
   "client_id": "local-smoke",
   "reports": [
@@ -58,37 +56,58 @@ $body = @'
     }
   ]
 }
-'@
-
-Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8080/api/v1/sync" -Headers $headers -Body $body
+EOF
 ```
 
 查看原始日志：
 
-```powershell
-Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8080/api/v1/logs?client_id=local-smoke&limit=20" -Headers $headers
+```bash
+curl -H "Authorization: Bearer dev-token" \
+  "http://127.0.0.1:8080/api/v1/logs?client_id=local-smoke&limit=20"
 ```
 
 查看总览和趋势：
 
-```powershell
-Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8080/api/v1/stats/overview" -Headers $headers
-Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8080/api/v1/stats/trend?interval=day" -Headers $headers
+```bash
+curl -H "Authorization: Bearer dev-token" \
+  http://127.0.0.1:8080/api/v1/stats/overview
+
+curl -H "Authorization: Bearer dev-token" \
+  "http://127.0.0.1:8080/api/v1/stats/trend?interval=day"
 ```
 
 查看定价列表：
 
-```powershell
-Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8080/api/v1/model-pricings" -Headers $headers
+```bash
+curl -H "Authorization: Bearer dev-token" \
+  http://127.0.0.1:8080/api/v1/model-pricings
 ```
+
+## API 接口
+
+### 公开接口
+
+- `GET /healthz`：健康检查，无需认证
+
+### 需要认证的接口（Bearer Token）
+
+- `POST /api/v1/sync`：接收客户端上报的使用记录
+- `GET /api/v1/model-pricings`：获取模型定价列表
+- `POST /api/v1/model-pricings`：创建模型定价
+- `PUT /api/v1/model-pricings/:id`：更新模型定价
+- `GET /api/v1/stats/overview`：获取统计总览
+- `GET /api/v1/stats/trend`：获取趋势统计
+- `GET /api/v1/stats/dashboard`：获取仪表盘数据
+- `GET /api/v1/logs`：获取使用记录日志
+- `GET /api/v1/ping`：ping 测试
 
 ## 与现有 Client 联调
 
-在 `client` 目录复制示例配置：
+在仓库根目录复制示例配置：
 
-```powershell
-New-Item -ItemType Directory -Force -Path "$HOME/.cc-usage-client" | Out-Null
-Copy-Item .\client\config.example.yaml "$HOME/.cc-usage-client/config.yaml"
+```bash
+mkdir -p ~/.cc-usage-client
+cp ./client/config.example.yaml ~/.cc-usage-client/config.yaml
 ```
 
 把 `~/.cc-usage-client/config.yaml` 中的服务地址改成本地 server：
@@ -102,22 +121,25 @@ timeout_seconds: 30
 
 然后执行：
 
-```powershell
+```bash
 go run ./client/cmd/cc-usage-client dry-run
 go run ./client/cmd/cc-usage-client sync
 ```
 
 联调后可以重新执行：
 
-```powershell
-Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8080/api/v1/logs?limit=20" -Headers $headers
-Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8080/api/v1/stats/overview" -Headers $headers
+```bash
+curl -H "Authorization: Bearer dev-token" \
+  "http://127.0.0.1:8080/api/v1/logs?limit=20"
+
+curl -H "Authorization: Bearer dev-token" \
+  http://127.0.0.1:8080/api/v1/stats/overview
 ```
 
 ## 开发验证
 
 在仓库根目录执行：
 
-```powershell
+```bash
 go test ./server/...
 ```
