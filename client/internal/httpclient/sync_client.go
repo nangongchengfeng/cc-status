@@ -65,18 +65,18 @@ func (client *SyncClient) Sync(clientID string, reports []Report) (SyncResponse,
 		return SyncResponse{}, fmt.Errorf("marshal sync payload: %w", err)
 	}
 
-	request, err := http.NewRequest(http.MethodPost, client.baseURL+"/api/v1/sync", bytes.NewReader(body))
-	if err != nil {
-		return SyncResponse{}, fmt.Errorf("build sync request: %w", err)
-	}
-	request.Header.Set("Content-Type", "application/json")
-	if client.authToken != "" {
-		request.Header.Set("Authorization", "Bearer "+client.authToken)
-	}
-
 	var lastErr error
 	for attempt := 0; attempt < 3; attempt++ {
-		response, err := client.httpClient.Do(request.Clone(request.Context()))
+		request, err := http.NewRequest(http.MethodPost, client.baseURL+"/api/v1/sync", bytes.NewReader(body))
+		if err != nil {
+			return SyncResponse{}, fmt.Errorf("build sync request: %w", err)
+		}
+		request.Header.Set("Content-Type", "application/json")
+		if client.authToken != "" {
+			request.Header.Set("Authorization", "Bearer "+client.authToken)
+		}
+
+		response, err := client.httpClient.Do(request)
 		if err != nil {
 			lastErr = fmt.Errorf("send sync request: %w", err)
 			// 只对网络层瞬时错误做指数退避，业务失败交由上层按整批失败处理。
@@ -87,7 +87,7 @@ func (client *SyncClient) Sync(clientID string, reports []Report) (SyncResponse,
 			return SyncResponse{}, lastErr
 		}
 
-		body, readErr := io.ReadAll(response.Body)
+		responseBody, readErr := io.ReadAll(response.Body)
 		_ = response.Body.Close()
 		if readErr != nil {
 			return SyncResponse{}, fmt.Errorf("read sync response: %w", readErr)
@@ -107,7 +107,7 @@ func (client *SyncClient) Sync(clientID string, reports []Report) (SyncResponse,
 		}
 
 		var decoded SyncResponse
-		if err := json.Unmarshal(body, &decoded); err != nil {
+		if err := json.Unmarshal(responseBody, &decoded); err != nil {
 			return SyncResponse{}, fmt.Errorf("decode sync response: %w", err)
 		}
 
