@@ -76,6 +76,7 @@ Copy-Item .\config.example.yaml "$HOME/.cc-usage-client/config.yaml"
 - `auth_token`：Bearer Token，建议优先用环境变量覆盖
 - `batch_size`：单批上报记录数，默认 `500`
 - `timeout_seconds`：单次 HTTP 请求超时秒数，默认 `30`
+- `client_name`：客户端名称（可选），设置后会替代自动生成的 UUID，用于在服务端更友好地标识客户端
 
 ## 环境变量覆盖
 
@@ -85,6 +86,7 @@ Copy-Item .\config.example.yaml "$HOME/.cc-usage-client/config.yaml"
 - `CC_USAGE_CLIENT_AUTH_TOKEN`
 - `CC_USAGE_CLIENT_BATCH_SIZE`
 - `CC_USAGE_CLIENT_TIMEOUT_SECONDS`
+- `CC_USAGE_CLIENT_CLIENT_NAME`
 
 示例：
 
