@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 import { TIME_RANGE_OPTIONS } from '@/constants/timeRanges';
 import { useDashboardQuery } from '@/hooks/useDashboardQuery';
@@ -14,7 +14,8 @@ import { formatUnixTimestamp } from '@/utils/format';
 import { buildQueryTimeRange, getDashboardIntervalLabel, type TimeRangePreset } from '@/utils/timeRange';
 
 export function DashboardPage() {
-  const [preset, setPreset] = useState<TimeRangePreset>('last7Days');
+  const [preset, setPreset] = useState<TimeRangePreset>('today');
+  const [hasAutoFallback, setHasAutoFallback] = useState(false);
   const queryRange = useMemo(() => buildQueryTimeRange(preset), [preset]);
   const dashboardQuery = useDashboardQuery(queryRange);
   const recentLogsQuery = useRecentLogsQuery({
@@ -22,6 +23,28 @@ export function DashboardPage() {
     endAt: queryRange.endAt,
     limit: 8,
   });
+
+  // 自动降级逻辑：今天 -> 最近7天 -> 最近30天
+  useEffect(() => {
+    if (hasAutoFallback || dashboardQuery.isPending || !dashboardQuery.data) {
+      return;
+    }
+
+    const { overview, trend } = dashboardQuery.data;
+    const hasData =
+      (overview?.totalRequests ?? 0) > 0 ||
+      parseFloat(overview?.totalCostUsd ?? '0') > 0 ||
+      (trend?.length ?? 0) > 0;
+
+    if (!hasData) {
+      if (preset === 'today') {
+        setPreset('last7Days');
+      } else if (preset === 'last7Days') {
+        setPreset('last30Days');
+      }
+      setHasAutoFallback(true);
+    }
+  }, [dashboardQuery.data, dashboardQuery.isPending, preset, hasAutoFallback]);
 
   const hasError = dashboardQuery.isError || recentLogsQuery.isError;
   const isLoading = dashboardQuery.isPending || recentLogsQuery.isPending;
@@ -87,7 +110,10 @@ export function DashboardPage() {
                       ? 'border-[#78b8ff] bg-[linear-gradient(135deg,#59b4ff,#d9f0ff)] text-[#10365b] -translate-y-0.5'
                       : 'border-[#d9e7f4] bg-white/72 text-[#4d6e8c] hover:-translate-y-0.5 hover:border-[#bddaf5] hover:bg-white',
                   ].join(' ')}
-                  onClick={() => setPreset(option.value)}
+                  onClick={() => {
+                    setPreset(option.value);
+                    setHasAutoFallback(true); // 用户手动选择后，停止自动降级
+                  }}
                   type="button"
                 >
                   {option.label}
