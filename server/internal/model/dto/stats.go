@@ -16,10 +16,18 @@ type StatsModelRank struct {
 	Tokens int64  `json:"tokens"`
 }
 
+// StatsClientModelCost 表示客户端单模型的费用。
+type StatsClientModelCost struct {
+	Model       string `json:"model"`
+	DisplayName string `json:"display_name"`
+	CostUSD     string `json:"cost_usd"`
+}
+
 // StatsClientRank 表示客户端排行项。
 type StatsClientRank struct {
-	ClientID     string `json:"client_id"`
-	TotalCostUSD string `json:"total_cost_usd"`
+	ClientID     string                   `json:"client_id"`
+	TotalCostUSD string                   `json:"total_cost_usd"`
+	ModelCosts   []StatsClientModelCost   `json:"model_costs"`
 }
 
 // StatsTrendQuery 表示趋势统计接口的查询参数。
@@ -68,20 +76,29 @@ type StatsDashboardOverview struct {
 
 // StatsDashboardTrendPoint 表示仪表盘统一时间桶数据。
 type StatsDashboardTrendPoint struct {
-	Bucket              string `json:"bucket"`
-	InputTokens         int64  `json:"input_tokens"`
-	OutputTokens        int64  `json:"output_tokens"`
-	CacheReadTokens     int64  `json:"cache_read_tokens"`
-	CacheCreationTokens int64  `json:"cache_creation_tokens"`
-	TotalRequests       int64  `json:"total_requests"`
-	TotalCostUSD        string `json:"total_cost_usd"`
+	Bucket              string                       `json:"bucket"`
+	InputTokens         int64                        `json:"input_tokens"`
+	OutputTokens        int64                        `json:"output_tokens"`
+	CacheReadTokens     int64                        `json:"cache_read_tokens"`
+	CacheCreationTokens int64                        `json:"cache_creation_tokens"`
+	TotalRequests       int64                        `json:"total_requests"`
+	TotalCostUSD        string                       `json:"total_cost_usd"`
+	ModelCosts          []StatsDashboardModelCost    `json:"model_costs"`
+}
+
+// StatsDashboardModelCost 表示单模型在时间桶内的费用。
+type StatsDashboardModelCost struct {
+	Model       string `json:"model"`
+	DisplayName string `json:"display_name"`
+	CostUSD     string `json:"cost_usd"`
 }
 
 // StatsDashboardModelRank 表示仪表盘模型排行项。
 type StatsDashboardModelRank struct {
-	Model       string `json:"model"`
-	DisplayName string `json:"display_name"`
-	TotalTokens int64  `json:"total_tokens"`
+	Model        string `json:"model"`
+	DisplayName  string `json:"display_name"`
+	TotalTokens  int64  `json:"total_tokens"`
+	TotalCostUSD string `json:"total_cost_usd"`
 }
 
 // StatsDashboardCacheAnalysis 表示仪表盘缓存效益分析数据。

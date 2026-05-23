@@ -12,6 +12,12 @@ interface DashboardApiOverview {
   output_tokens?: number;
 }
 
+interface DashboardApiTrendModelCost {
+  model: string;
+  display_name?: string;
+  cost_usd: string;
+}
+
 interface DashboardApiTrendPoint {
   bucket: string;
   input_tokens?: number;
@@ -20,17 +26,26 @@ interface DashboardApiTrendPoint {
   cache_creation_tokens?: number;
   total_requests?: number;
   total_cost_usd?: string;
+  model_costs?: DashboardApiTrendModelCost[];
 }
 
 interface DashboardApiTopModel {
   model: string;
   display_name?: string;
   total_tokens?: number;
+  total_cost_usd?: string;
+}
+
+interface DashboardApiTopClientModelCost {
+  model: string;
+  display_name?: string;
+  cost_usd: string;
 }
 
 interface DashboardApiTopClient {
   client_id: string;
   total_cost_usd?: string;
+  model_costs?: DashboardApiTopClientModelCost[];
 }
 
 interface DashboardApiCacheAnalysis {
@@ -92,15 +107,26 @@ export async function getDashboard(query: DashboardQuery): Promise<DashboardResp
       cacheCreationTokens: item.cache_creation_tokens ?? 0,
       totalRequests: item.total_requests ?? 0,
       totalCostUsd: item.total_cost_usd ?? '0',
+      modelCosts: (item.model_costs ?? []).map((modelCost) => ({
+        model: modelCost.model,
+        displayName: modelCost.display_name ?? '',
+        costUsd: modelCost.cost_usd ?? '0',
+      })),
     })),
     topModels: (payload.top_models ?? []).map((item) => ({
       model: item.model,
       displayName: item.display_name ?? '',
       totalTokens: item.total_tokens ?? 0,
+      totalCostUsd: item.total_cost_usd ?? '0.0000000000',
     })),
     topClients: (payload.top_clients ?? []).map((item) => ({
       clientId: item.client_id,
       totalCostUsd: item.total_cost_usd ?? '0',
+      modelCosts: (item.model_costs ?? []).map((modelCost) => ({
+        model: modelCost.model,
+        displayName: modelCost.display_name ?? '',
+        costUsd: modelCost.cost_usd ?? '0',
+      })),
     })),
     cacheAnalysis: {
       savedCostUsd: payload.cache_analysis?.saved_cost_usd ?? '0',

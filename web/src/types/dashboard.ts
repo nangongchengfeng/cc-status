@@ -17,6 +17,12 @@ export interface DashboardOverview {
   outputTokens: number;
 }
 
+export interface DashboardTrendModelCost {
+  model: string;
+  displayName: string;
+  costUsd: string;
+}
+
 export interface DashboardTrendPoint {
   bucket: string;
   inputTokens: number;
@@ -25,17 +31,26 @@ export interface DashboardTrendPoint {
   cacheCreationTokens: number;
   totalRequests: number;
   totalCostUsd: string;
+  modelCosts?: DashboardTrendModelCost[];
 }
 
 export interface DashboardTopModel {
   model: string;
   displayName: string;
   totalTokens: number;
+  totalCostUsd: string;
+}
+
+export interface DashboardTopClientModelCost {
+  model: string;
+  displayName: string;
+  costUsd: string;
 }
 
 export interface DashboardTopClient {
   clientId: string;
   totalCostUsd: string;
+  modelCosts?: DashboardTopClientModelCost[];
 }
 
 export interface DashboardCacheAnalysis {

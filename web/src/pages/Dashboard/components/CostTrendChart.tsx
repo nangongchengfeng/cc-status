@@ -1,11 +1,49 @@
 import type { DashboardInterval, DashboardTrendPoint } from '@/types/dashboard';
 import { ChartViewport } from '@/pages/Dashboard/components/ChartViewport';
-import { formatBucketLabel, formatMetricValue } from '@/utils/format';
-import { CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from 'recharts';
+import { formatBucketLabel, formatMetricValue, getModelDisplayName } from '@/utils/format';
+import { CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis, TooltipProps } from 'recharts';
 
 interface CostTrendChartProps {
   trend: DashboardTrendPoint[];
   interval: DashboardInterval;
+}
+
+function CustomTooltip({ active, payload, label, interval }: any & { interval: DashboardInterval }) {
+  if (!active || !payload || payload.length === 0) {
+    return null;
+  }
+
+  const point = payload[0].payload as DashboardTrendPoint;
+
+  return (
+    <div
+      style={{
+        background: 'rgba(245, 250, 255, 0.96)',
+        border: '1px solid rgba(138, 176, 214, 0.36)',
+        borderRadius: '18px',
+        color: '#17324b',
+        boxShadow: '0 18px 42px rgba(104, 153, 204, 0.18)',
+        padding: '12px 16px',
+      }}
+    >
+      <p style={{ fontWeight: 600, marginBottom: 8 }}>{formatBucketLabel(label, interval)}</p>
+      <p style={{ marginBottom: 8 }}>
+        <span style={{ fontWeight: 500 }}>总费用：</span>
+        {formatMetricValue(point.totalCostUsd, 'currency')}
+      </p>
+      {point.modelCosts && point.modelCosts.length > 0 && (
+        <div>
+          <p style={{ fontWeight: 500, marginBottom: 4, fontSize: 12, opacity: 0.8 }}>各模型费用：</p>
+          {point.modelCosts.map((modelCost) => (
+            <p key={modelCost.model} style={{ fontSize: 12, margin: 2 }}>
+              {getModelDisplayName({ displayName: modelCost.displayName, model: modelCost.model })}：
+              {formatMetricValue(modelCost.costUsd, 'currency')}
+            </p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function CostTrendChart({ trend, interval }: CostTrendChartProps) {
@@ -37,17 +75,7 @@ export function CostTrendChart({ trend, interval }: CostTrendChartProps) {
             axisLine={false}
             width={56}
           />
-          <Tooltip
-            contentStyle={{
-              background: 'rgba(245, 250, 255, 0.96)',
-              border: '1px solid rgba(138, 176, 214, 0.36)',
-              borderRadius: '18px',
-              color: '#17324b',
-              boxShadow: '0 18px 42px rgba(104, 153, 204, 0.18)',
-            }}
-            formatter={(value) => formatMetricValue(String(value ?? 0), 'currency')}
-            labelFormatter={(label) => formatBucketLabel(label, interval)}
-          />
+          <Tooltip content={<CustomTooltip interval={interval} />} />
           <Line
             type="monotone"
             dataKey="totalCostUsd"

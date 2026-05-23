@@ -73,7 +73,7 @@ func (service *StatsService) Overview(ctx context.Context) (dto.StatsOverviewRes
 		TotalRequests: int64(len(reports)),
 		ActiveClients: int64(len(activeClients)),
 		TopModels:     buildTopModels(modelTokens),
-		TopClients:    buildTopClients(clientCosts),
+		TopClients:    buildTopClients(clientCosts, nil, nil),
 	}, nil
 }
 
@@ -125,12 +125,15 @@ func (service *StatsService) Dashboard(
 		cacheCreationTokens int64
 		totalRequests       int64
 		totalCostUSD        *big.Rat
+		modelCosts          map[string]*big.Rat
 	}
 
 	activeClients := make(map[string]struct{})
 	buckets := make(map[time.Time]*dashboardAggregate)
 	clientCosts := make(map[string]*big.Rat)
+	clientModelCosts := make(map[string]map[string]*big.Rat)
 	modelTokens := make(map[string]int64)
+	modelCosts := make(map[string]*big.Rat)
 	cacheReadCost := new(big.Rat)
 	cacheCreationCost := new(big.Rat)
 	savedCost := new(big.Rat)
@@ -169,10 +172,22 @@ func (service *StatsService) Dashboard(
 			modelTokens[report.Model] += tokenCount
 			reportCost := parseDecimal(report.TotalCostUSD)
 			totalCost.Add(totalCost, reportCost)
+			if _, exists := modelCosts[report.Model]; !exists {
+				modelCosts[report.Model] = new(big.Rat)
+			}
+			modelCosts[report.Model].Add(modelCosts[report.Model], reportCost)
 			if _, exists := clientCosts[report.ClientID]; !exists {
 				clientCosts[report.ClientID] = new(big.Rat)
 			}
 			clientCosts[report.ClientID].Add(clientCosts[report.ClientID], reportCost)
+
+			if _, exists := clientModelCosts[report.ClientID]; !exists {
+				clientModelCosts[report.ClientID] = make(map[string]*big.Rat)
+			}
+			if _, exists := clientModelCosts[report.ClientID][report.Model]; !exists {
+				clientModelCosts[report.ClientID][report.Model] = new(big.Rat)
+			}
+			clientModelCosts[report.ClientID][report.Model].Add(clientModelCosts[report.ClientID][report.Model], reportCost)
 
 			reportCacheReadCost := parseDecimal(report.CacheReadCostUSD)
 			reportCacheCreationCost := parseDecimal(report.CacheCreationCostUSD)
@@ -181,7 +196,10 @@ func (service *StatsService) Dashboard(
 
 			bucketTime := truncateTrendTime(reportTime, query.Interval)
 			if _, exists := buckets[bucketTime]; !exists {
-				buckets[bucketTime] = &dashboardAggregate{totalCostUSD: new(big.Rat)}
+				buckets[bucketTime] = &dashboardAggregate{
+					totalCostUSD: new(big.Rat),
+					modelCosts:   make(map[string]*big.Rat),
+				}
 			}
 
 			aggregate := buckets[bucketTime]
@@ -190,7 +208,11 @@ func (service *StatsService) Dashboard(
 			aggregate.cacheReadTokens += report.CacheReadTokens
 			aggregate.cacheCreationTokens += report.CacheCreationTokens
 			aggregate.totalRequests++
-			aggregate.totalCostUSD.Add(aggregate.totalCostUSD, parseDecimal(report.TotalCostUSD))
+			aggregate.totalCostUSD.Add(aggregate.totalCostUSD, reportCost)
+			if _, exists := aggregate.modelCosts[report.Model]; !exists {
+				aggregate.modelCosts[report.Model] = new(big.Rat)
+			}
+			aggregate.modelCosts[report.Model].Add(aggregate.modelCosts[report.Model], reportCost)
 		}
 
 		// 处理前一个周期数据
@@ -203,9 +225,13 @@ func (service *StatsService) Dashboard(
 			previousInputTokens += report.InputTokens
 			previousOutputTokens += report.OutputTokens
 			previousActiveClients[report.ClientID] = struct{}{}
-			reportCost := parseDecimal(report.TotalCostUSD)
-			previousTotalCost.Add(previousTotalCost, reportCost)
+			previousTotalCost.Add(previousTotalCost, parseDecimal(report.TotalCostUSD))
 		}
+	}
+
+	displayNames := make(map[string]string)
+	for _, pricing := range pricings {
+		displayNames[strings.ToLower(pricing.ModelID)] = pricing.DisplayName
 	}
 
 	trend := []dto.StatsDashboardTrendPoint{}
@@ -217,6 +243,7 @@ func (service *StatsService) Dashboard(
 				trend = append(trend, dto.StatsDashboardTrendPoint{
 					Bucket:       current.Format(time.RFC3339),
 					TotalCostUSD: "0.0000000000",
+					ModelCosts:   []dto.StatsDashboardModelCost{},
 				})
 				continue
 			}
@@ -229,17 +256,13 @@ func (service *StatsService) Dashboard(
 				CacheCreationTokens: aggregate.cacheCreationTokens,
 				TotalRequests:       aggregate.totalRequests,
 				TotalCostUSD:        aggregate.totalCostUSD.FloatString(10),
+				ModelCosts:          buildTrendModelCosts(aggregate.modelCosts, displayNames),
 			})
 		}
 	}
 
-	displayNames := make(map[string]string)
-	for _, pricing := range pricings {
-		displayNames[strings.ToLower(pricing.ModelID)] = pricing.DisplayName
-	}
-
-	topModels := buildDashboardTopModels(modelTokens, displayNames)
-	topClients := buildTopClients(clientCosts)
+	topModels := buildDashboardTopModels(modelTokens, modelCosts, displayNames)
+	topClients := buildTopClients(clientCosts, clientModelCosts, displayNames)
 	for _, report := range reports {
 		reportTime := time.Unix(report.CreatedAtUnix, 0).In(location)
 		if reportTime.Before(startAt) || reportTime.After(rangeEnd) {
@@ -292,16 +315,47 @@ func (service *StatsService) Dashboard(
 	}, nil
 }
 
+func buildTrendModelCosts(
+	modelCosts map[string]*big.Rat,
+	displayNames map[string]string,
+) []dto.StatsDashboardModelCost {
+	items := make([]dto.StatsDashboardModelCost, 0, len(modelCosts))
+	for model, cost := range modelCosts {
+		items = append(items, dto.StatsDashboardModelCost{
+			Model:        model,
+			DisplayName:  displayNames[strings.ToLower(model)],
+			CostUSD:      cost.FloatString(10),
+		})
+	}
+
+	sort.Slice(items, func(left int, right int) bool {
+		leftCost := parseDecimal(items[left].CostUSD)
+		rightCost := parseDecimal(items[right].CostUSD)
+		if leftCost.Cmp(rightCost) == 0 {
+			return items[left].Model < items[right].Model
+		}
+		return leftCost.Cmp(rightCost) > 0
+	})
+
+	return items
+}
+
 func buildDashboardTopModels(
 	modelTokens map[string]int64,
+	modelCosts map[string]*big.Rat,
 	displayNames map[string]string,
 ) []dto.StatsDashboardModelRank {
 	items := make([]dto.StatsDashboardModelRank, 0, len(modelTokens))
 	for model, totalTokens := range modelTokens {
+		totalCostUSD := "0.0000000000"
+		if cost, exists := modelCosts[model]; exists {
+			totalCostUSD = cost.FloatString(10)
+		}
 		items = append(items, dto.StatsDashboardModelRank{
-			Model:       model,
-			DisplayName: displayNames[strings.ToLower(model)],
-			TotalTokens: totalTokens,
+			Model:        model,
+			DisplayName:  displayNames[strings.ToLower(model)],
+			TotalTokens:  totalTokens,
+			TotalCostUSD: totalCostUSD,
 		})
 	}
 
@@ -450,12 +504,55 @@ func buildTopModels(modelTokens map[string]int64) []dto.StatsModelRank {
 	return items
 }
 
-func buildTopClients(clientCosts map[string]*big.Rat) []dto.StatsClientRank {
+func buildClientModelCosts(
+	modelCosts map[string]*big.Rat,
+	displayNames map[string]string,
+) []dto.StatsClientModelCost {
+	if modelCosts == nil {
+		return []dto.StatsClientModelCost{}
+	}
+	items := make([]dto.StatsClientModelCost, 0, len(modelCosts))
+	for model, cost := range modelCosts {
+		displayName := ""
+		if displayNames != nil {
+			displayName = displayNames[strings.ToLower(model)]
+		}
+		items = append(items, dto.StatsClientModelCost{
+			Model:        model,
+			DisplayName:  displayName,
+			CostUSD:      cost.FloatString(10),
+		})
+	}
+
+	sort.Slice(items, func(left int, right int) bool {
+		leftCost := parseDecimal(items[left].CostUSD)
+		rightCost := parseDecimal(items[right].CostUSD)
+		if leftCost.Cmp(rightCost) == 0 {
+			return items[left].Model < items[right].Model
+		}
+		return leftCost.Cmp(rightCost) > 0
+	})
+
+	return items
+}
+
+func buildTopClients(
+	clientCosts map[string]*big.Rat,
+	clientModelCosts map[string]map[string]*big.Rat,
+	displayNames map[string]string,
+) []dto.StatsClientRank {
 	items := make([]dto.StatsClientRank, 0, len(clientCosts))
 	for clientID, totalCost := range clientCosts {
+		modelCosts := make([]dto.StatsClientModelCost, 0)
+		if clientModelCosts != nil {
+			if mc, exists := clientModelCosts[clientID]; exists {
+				modelCosts = buildClientModelCosts(mc, displayNames)
+			}
+		}
 		items = append(items, dto.StatsClientRank{
 			ClientID:     clientID,
 			TotalCostUSD: totalCost.FloatString(10),
+			ModelCosts:   modelCosts,
 		})
 	}
 

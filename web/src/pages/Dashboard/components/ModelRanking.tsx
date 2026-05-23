@@ -1,10 +1,51 @@
 import type { DashboardTopModel } from '@/types/dashboard';
 import { ChartViewport } from '@/pages/Dashboard/components/ChartViewport';
-import { formatMetricValue, getModelDisplayName, truncateLabel } from '@/utils/format';
+import { formatMetricValue, getModelDisplayName, truncateLabel, formatNumberInWanYi } from '@/utils/format';
 import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from 'recharts';
 
 interface ModelRankingProps {
   items: DashboardTopModel[];
+}
+
+interface ModelDataPoint {
+  name: string;
+  totalTokens: number;
+  totalCostUsd: string;
+  originalItem: DashboardTopModel;
+}
+
+function CustomTooltip({ active, payload }: any) {
+  if (!active || !payload || payload.length === 0) {
+    return null;
+  }
+
+  const data = payload[0].payload as ModelDataPoint;
+  const item = data.originalItem;
+
+  const formattedTokens = formatNumberInWanYi(item.totalTokens);
+
+  return (
+    <div
+      style={{
+        background: 'rgba(245,250,255,0.96)',
+        border: '1px solid rgba(138,176,214,0.36)',
+        borderRadius: '18px',
+        color: '#17324b',
+        boxShadow: '0 18px 42px rgba(104,153,204,0.18)',
+        padding: '12px 16px',
+      }}
+    >
+      <p style={{ fontWeight: 600, marginBottom: 8 }}>{getModelDisplayName({ displayName: item.displayName, model: item.model })}</p>
+      <p style={{ marginBottom: 4 }}>
+        <span style={{ fontWeight: 500 }}>Token 消耗：</span>
+        {formattedTokens ? `${formattedTokens.number}${formattedTokens.unit}` : formatMetricValue(item.totalTokens, 'number')}
+      </p>
+      <p>
+        <span style={{ fontWeight: 500 }}>费用：</span>
+        {formatMetricValue(item.totalCostUsd, 'currency')}
+      </p>
+    </div>
+  );
 }
 
 export function ModelRanking({ items }: ModelRankingProps) {
@@ -21,39 +62,41 @@ export function ModelRanking({ items }: ModelRankingProps) {
 
     if (acc[displayName]) {
       acc[displayName].totalTokens += item.totalTokens;
+      acc[displayName].totalCostUsd = (parseFloat(acc[displayName].totalCostUsd) + parseFloat(item.totalCostUsd || '0')).toFixed(10);
     } else {
       acc[displayName] = {
         name: displayName,
         totalTokens: item.totalTokens,
+        totalCostUsd: item.totalCostUsd || '0.0000000000',
+        originalItem: item,
       };
     }
 
     return acc;
-  }, {} as Record<string, { name: string; totalTokens: number }>);
+  }, {} as Record<string, ModelDataPoint>);
 
-  const data = Object.values(mergedModelData)
-    .sort((a, b) => b.totalTokens - a.totalTokens);
+  const data = Object.values(mergedModelData).sort((a, b) => b.totalTokens - a.totalTokens);
 
   return (
     <div className="h-[320px] min-w-0 rounded-[28px] border border-white/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.8),rgba(237,246,252,0.96))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]">
       <ChartViewport>
         {({ width, height }) => (
-        <BarChart width={width} height={height} data={data} layout="vertical" margin={{ left: 8, right: 8 }}>
-          <CartesianGrid stroke="rgba(120,155,193,0.18)" horizontal={false} />
-          <XAxis type="number" stroke="#7191b0" tickLine={false} axisLine={false} />
-          <YAxis dataKey="name" type="category" stroke="#7191b0" tickFormatter={(value) => truncateLabel(String(value), 24)} tickLine={false} axisLine={false} width={180} />
-          <Tooltip
-            contentStyle={{
-              background: 'rgba(245, 250, 255, 0.96)',
-              border: '1px solid rgba(138, 176, 214, 0.36)',
-              borderRadius: '18px',
-              color: '#17324b',
-              boxShadow: '0 18px 42px rgba(104, 153, 204, 0.18)',
-            }}
-            formatter={(value) => formatMetricValue(Number(value ?? 0), 'number')}
-          />
-          <Bar dataKey="totalTokens" radius={[0, 12, 12, 0]} fill="#5ca8ff" />
-        </BarChart>
+          <BarChart width={width} height={height} data={data} layout="vertical" margin={{ left: 8, right: 8 }}>
+            <CartesianGrid stroke="rgba(120,155,193,0.18)" horizontal={false} />
+            <XAxis
+              type="number"
+              stroke="#7191b0"
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={(value: number) => {
+                const formatted = formatNumberInWanYi(value);
+                return formatted ? `${formatted.number}${formatted.unit}` : String(value);
+              }}
+            />
+            <YAxis dataKey="name" type="category" stroke="#7191b0" tickFormatter={(value: string) => truncateLabel(value, 24)} tickLine={false} axisLine={false} width={180} />
+            <Tooltip content={<CustomTooltip />} />
+            <Bar dataKey="totalTokens" radius={[0, 12, 12, 0]} fill="#5ca8ff" />
+          </BarChart>
         )}
       </ChartViewport>
     </div>
