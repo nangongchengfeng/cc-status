@@ -16,10 +16,23 @@ export function ModelRanking({ items }: ModelRankingProps) {
     );
   }
 
-  const data = items.map((item) => ({
-    name: getModelDisplayName({ displayName: item.displayName, model: item.model }),
-    totalTokens: item.totalTokens,
-  }));
+  const mergedModelData = items.reduce((acc, item) => {
+    const displayName = getModelDisplayName({ displayName: item.displayName, model: item.model });
+
+    if (acc[displayName]) {
+      acc[displayName].totalTokens += item.totalTokens;
+    } else {
+      acc[displayName] = {
+        name: displayName,
+        totalTokens: item.totalTokens,
+      };
+    }
+
+    return acc;
+  }, {} as Record<string, { name: string; totalTokens: number }>);
+
+  const data = Object.values(mergedModelData)
+    .sort((a, b) => b.totalTokens - a.totalTokens);
 
   return (
     <div className="h-[320px] min-w-0 rounded-[28px] border border-white/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.8),rgba(237,246,252,0.96))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]">
