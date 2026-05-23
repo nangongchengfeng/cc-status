@@ -19,7 +19,7 @@ func NewRouter(
 	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.New()
-	router.Use(gin.Recovery())
+	router.Use(gin.Recovery(), middleware.Logger())
 
 	router.GET("/healthz", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, successData(gin.H{"status": "ok"}))
