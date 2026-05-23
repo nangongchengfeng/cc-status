@@ -1,7 +1,4 @@
 # Database files
-*.db
-*.sqlite
-*.sqlite3
 
 # IDE
 .idea/
