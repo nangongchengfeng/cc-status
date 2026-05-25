@@ -28,13 +28,13 @@ build-web:
 	$(MKDIR) server/internal/handler/ui/dist
 	$(CP) web/dist/* server/internal/handler/ui/dist/
 
-# 构建后端（带 embed tag）
+# 构建后端（带 embed tag，静态编译）
 build-server:
-	@echo "Building server..."
+	@echo "Building server (statically linked)..."
 ifeq ($(OS),Windows_NT)
-	cd server && go build -tags embed -o bin/server.exe ./cmd/server
+	cd server && set CGO_ENABLED=0 && go build -tags embed -ldflags="-s -w" -o bin/server.exe ./cmd/server
 else
-	cd server && go build -tags embed -o bin/server ./cmd/server
+	cd server && CGO_ENABLED=0 go build -tags embed -ldflags="-s -w -extldflags=-static" -o bin/server ./cmd/server
 endif
 
 # 清理构建产物

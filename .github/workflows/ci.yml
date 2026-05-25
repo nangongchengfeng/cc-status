@@ -82,10 +82,12 @@ jobs:
           mkdir -p server/internal/handler/ui/dist
           cp -r web/dist/* server/internal/handler/ui/dist/
 
-      - name: Build Server (with embedded web)
+      - name: Build Server (with embedded web, statically linked)
         working-directory: ./server
+        env:
+          CGO_ENABLED: 0
         run: |
-          go build -tags embed -ldflags="-s -w" -o "../${{ matrix.server-artifact }}" ./cmd/server
+          go build -tags embed -ldflags="-s -w -extldflags=-static" -o "../${{ matrix.server-artifact }}" ./cmd/server
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v1

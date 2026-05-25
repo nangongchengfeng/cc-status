@@ -178,6 +178,8 @@ Server 使用 Go `embed` 将 web 静态资源打包进二进制文件。
 
 ### 构建命令
 
+项目使用静态编译（`CGO_ENABLED=0`），生成的二进制文件不依赖系统 GLIBC，可以在 CentOS 7 等老系统上直接运行。
+
 ```bash
 # 发布构建（推荐从项目根目录执行）
 cd ..
@@ -193,7 +195,13 @@ make build
 
 ```bash
 cd server
-go build -tags embed -o bin/server ./cmd/server
+
+# Linux/macOS: 静态编译
+CGO_ENABLED=0 go build -tags embed -ldflags="-s -w -extldflags=-static" -o bin/server ./cmd/server
+
+# Windows: 静态编译
+$env:CGO_ENABLED=0
+go build -tags embed -ldflags="-s -w" -o bin/server.exe ./cmd/server
 ```
 
 ### 目录结构

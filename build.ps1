@@ -21,10 +21,11 @@ function Build-Web {
 }
 
 function Build-Server {
-    Write-Host "Building server..." -ForegroundColor Cyan
+    Write-Host "Building server (statically linked)..." -ForegroundColor Cyan
     Push-Location "$ScriptDir\server"
+    $env:CGO_ENABLED = 0
     $exeName = if ($env:OS -eq "Windows_NT") { "bin\server.exe" } else { "bin/server" }
-    go build -tags embed -o $exeName ./cmd/server
+    go build -tags embed -ldflags="-s -w" -o $exeName ./cmd/server
     Pop-Location
 }
 
