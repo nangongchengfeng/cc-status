@@ -13,22 +13,38 @@ import (
 func setupTestDist(t *testing.T) (cleanup func()) {
 	t.Helper()
 
-	// 创建 internal/ui/dist 目录
-	distDir := "internal/ui/dist"
-	if err := os.MkdirAll(distDir, 0755); err != nil {
+	// 保存原来的工作目录
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("failed to get cwd: %v", err)
+	}
+
+	// 创建临时目录并 chdir 进去
+	tmpDir := t.TempDir()
+	if err := os.Chdir(tmpDir); err != nil {
+		t.Fatalf("failed to chdir to temp dir: %v", err)
+	}
+
+	// 创建 server 目录结构，相对于项目根目录的路径现在是 ./...
+	serverDir := filepath.Join(tmpDir, "server")
+	if err := os.MkdirAll(filepath.Join(serverDir, "internal", "ui", "dist"), 0755); err != nil {
 		t.Fatalf("failed to create dist dir: %v", err)
+	}
+	// 切换到 server 目录
+	if err := os.Chdir(serverDir); err != nil {
+		t.Fatalf("failed to chdir to server dir: %v", err)
 	}
 
 	// 创建测试用的 index.html
-	indexPath := filepath.Join(distDir, "index.html")
+	indexPath := filepath.Join("internal", "ui", "dist", "index.html")
 	indexContent := "<html><body>Test Index</body></html>"
 	if err := os.WriteFile(indexPath, []byte(indexContent), 0644); err != nil {
 		t.Fatalf("failed to write test index.html: %v", err)
 	}
 
-	// 返回清理函数
+	// 返回清理函数（go test 会自动清理 TempDir）
 	return func() {
-		os.RemoveAll("internal/ui")
+		os.Chdir(origDir)
 	}
 }
 
