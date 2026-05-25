@@ -7,7 +7,6 @@ import (
 	"embed"
 	"io/fs"
 	"net/http"
-	"path/filepath"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -68,8 +67,8 @@ func getEmbeddedFS() (fs.FS, bool) {
 		return nil, false
 	}
 
-	// 检查是否有内容
-	entries, err := subFS.ReadDir(".")
+	// 检查是否有内容：尝试读取目录
+	entries, err := fs.ReadDir(subFS, ".")
 	if err != nil || len(entries) == 0 {
 		return nil, false
 	}
