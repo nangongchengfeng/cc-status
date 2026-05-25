@@ -26,11 +26,11 @@ jobs:
 
       - name: Test Client
         working-directory: ./client
-        run: go test -v ./...
+        run: go test -v -timeout 30s ./...
 
       - name: Test Server
         working-directory: ./server
-        run: go test -v ./...
+        run: go test -v -timeout 30s ./...
 
   release:
     name: Release (${{ matrix.os }})
