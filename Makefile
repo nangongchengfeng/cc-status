@@ -11,7 +11,7 @@ else
     MKDIR = mkdir -p
 endif
 
-.PHONY: all build build-web build-server clean
+.PHONY: all build build-web build-server build-client clean
 
 # 默认目标
 all: build
@@ -37,9 +37,19 @@ else
 	cd server && CGO_ENABLED=0 go build -tags embed -ldflags="-s -w -extldflags=-static" -o bin/server ./cmd/server
 endif
 
+# 构建客户端（静态编译）
+build-client:
+	@echo "Building client (statically linked)..."
+ifeq ($(OS),Windows_NT)
+	cd client && set CGO_ENABLED=0 && go build -ldflags="-s -w" -o bin/cc-usage-client.exe ./cmd/cc-usage-client
+else
+	cd client && CGO_ENABLED=0 go build -ldflags="-s -w" -extldflags=-static -o bin/cc-usage-client ./cmd/cc-usage-client
+endif
+
 # 清理构建产物
 clean:
 	@echo "Cleaning..."
 	$(RM) server/bin
 	$(RM) server/internal/handler/ui/dist
 	$(RM) web/dist
+	$(RM) client/bin

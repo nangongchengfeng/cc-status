@@ -1,7 +1,7 @@
 # CC Status 构建脚本 (Windows PowerShell)
 
 param(
-    [ValidateSet("all", "web", "server", "clean")]
+    [ValidateSet("all", "web", "server", "client", "clean")]
     [string]$Target = "all"
 )
 
@@ -29,6 +29,15 @@ function Build-Server {
     Pop-Location
 }
 
+function Build-Client {
+    Write-Host "Building client (statically linked)..." -ForegroundColor Cyan
+    Push-Location "$ScriptDir\client"
+    $env:CGO_ENABLED = 0
+    $exeName = if ($env:OS -eq "Windows_NT") { "bin\cc-usage-client.exe" } else { "bin/cc-usage-client" }
+    go build -ldflags="-s -w" -o $exeName ./cmd/cc-usage-client
+    Pop-Location
+}
+
 function Clean {
     Write-Host "Cleaning..." -ForegroundColor Cyan
     Remove-Item -Recurse -Force "$ScriptDir\server\bin" -ErrorAction SilentlyContinue
@@ -36,13 +45,15 @@ function Clean {
     New-Item -ItemType Directory -Force "$ScriptDir\server\internal\handler\ui\dist" | Out-Null
     New-Item -ItemType File -Force "$ScriptDir\server\internal\handler\ui\dist\.gitkeep" | Out-Null
     Remove-Item -Recurse -Force "$ScriptDir\web\dist" -ErrorAction SilentlyContinue
+    Remove-Item -Recurse -Force "$ScriptDir\client\bin" -ErrorAction SilentlyContinue
 }
 
 switch ($Target) {
     "web" { Build-Web }
     "server" { Build-Server }
+    "client" { Build-Client }
     "clean" { Clean }
-    "all" { Clean; Build-Web; Build-Server }
+    "all" { Clean; Build-Web; Build-Server; Build-Client }
 }
 
 Write-Host "Build completed!" -ForegroundColor Green
