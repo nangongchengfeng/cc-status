@@ -137,7 +137,7 @@ function getDisplayValue(value: number): { main: string; unit?: string; secondar
   return { main: full };
 }
 
-// 计算缓存命中率: cache_read_tokens / (input_tokens + cache_read_tokens)
+// 计算缓存读占比: cache_read_tokens / (input_tokens + cache_read_tokens)
 function calculateCacheHitRate(cacheRead: number, input: number): string | null {
   const denominator = input + cacheRead;
   if (denominator === 0) return null;
@@ -289,7 +289,7 @@ export function OverviewMainCards({ overview, previousOverview, preset }: Overvi
         accent="bg-[linear-gradient(145deg,rgba(120,210,200,0.25),rgba(255,255,255,0.92))]"
         change={cacheHitRate ?? undefined}
         isPositive={true}
-        compareLabel={cacheHitRate ? '缓存命中率' : undefined}
+        compareLabel={cacheHitRate ? '缓存读占比' : undefined}
         hideArrow={true}
       />
       <div className="grid gap-2">
