@@ -21,10 +21,12 @@ func NewRouter(
 	router := gin.New()
 	router.Use(gin.Recovery(), middleware.Logger())
 
+	// 1. 健康检查（无需认证，最高优先级）
 	router.GET("/healthz", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, successData(gin.H{"status": "ok"}))
 	})
 
+	// 2. API 路由（需要认证）
 	protected := router.Group("/api/v1")
 	protected.Use(middleware.StaticTokenAuth(authToken))
 	if syncHandler != nil {
@@ -46,6 +48,9 @@ func NewRouter(
 	protected.GET("/ping", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, successData(gin.H{"message": "pong"}))
 	})
+
+	// 3. UI 路由（最低优先级，最后注册）
+	RegisterUIRoutes(router)
 
 	return router
 }
