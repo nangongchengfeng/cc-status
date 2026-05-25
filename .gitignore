@@ -18,3 +18,8 @@ Thumbs.db
 
 # Git worktrees
 .worktrees/
+
+# Local tools
+.claude/
+.codegraph/
+.understand-anything/
