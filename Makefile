@@ -31,7 +31,11 @@ build-web:
 # 构建后端（带 embed tag）
 build-server:
 	@echo "Building server..."
+ifeq ($(OS),Windows_NT)
+	cd server && go build -tags embed -o bin/server.exe ./cmd/server
+else
 	cd server && go build -tags embed -o bin/server ./cmd/server
+endif
 
 # 清理构建产物
 clean:

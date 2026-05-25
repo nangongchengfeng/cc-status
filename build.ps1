@@ -23,7 +23,8 @@ function Build-Web {
 function Build-Server {
     Write-Host "Building server..." -ForegroundColor Cyan
     Push-Location "$ScriptDir\server"
-    go build -tags embed -o bin/server ./cmd/server
+    $exeName = if ($env:OS -eq "Windows_NT") { "bin\server.exe" } else { "bin/server" }
+    go build -tags embed -o $exeName ./cmd/server
     Pop-Location
 }
 
