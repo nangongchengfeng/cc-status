@@ -2,12 +2,43 @@
 
 `cc-status/server` 是接收 Claude Code 使用记录、计算费用并提供查询统计 API 的服务端。
 
+## 特性
+
+- 完整的 REST API（认证、同步、统计、日志、模型定价）
+- 使用 Go `embed` 打包前端静态资源，单一文件部署
+- SQLite 数据持久化
+- SPA 路由 fallback 支持
+
 ## 相关 ADR
 
 - `docs/adr/0001-server-domain-uses-usage-reports.md`：说明为什么服务端核心域使用 `usage_reports`，而不是历史材料中的 `proxy_request_logs`
 - `docs/adr/0002-server-config-uses-stdlib-and-env.md`：说明为什么首版配置层使用标准库与环境变量，而不是立即引入 `viper`
 
-## 本地启动
+## 快速开始
+
+### 方式1：使用构建好的单一二进制文件（推荐）
+
+构建包含前端的完整版本：
+
+```bash
+# Windows
+cd ..
+.\build.ps1
+
+# Linux/macOS
+cd ..
+make build
+
+# 运行
+$env:CC_USAGE_SERVER_AUTH_TOKEN="dev-token"   # Windows
+export CC_USAGE_SERVER_AUTH_TOKEN="dev-token"  # Linux/macOS
+
+./server/bin/server    # 或 server.exe on Windows
+```
+
+访问 http://localhost:8080 查看仪表板。
+
+### 方式2：开发模式（不包含前端）
 
 在仓库根目录执行：
 
@@ -134,6 +165,51 @@ curl -H "Authorization: Bearer dev-token" \
 
 curl -H "Authorization: Bearer dev-token" \
   http://127.0.0.1:8080/api/v1/stats/overview
+```
+
+## 构建说明
+
+Server 使用 Go `embed` 将 web 静态资源打包进二进制文件。
+
+### 构建模式
+
+- **开发模式**（默认）：不嵌入静态资源，仅提供 API
+- **发布模式**（`-tags embed`）：嵌入 web 静态资源，同时提供 API 和 Web UI
+
+### 构建命令
+
+```bash
+# 发布构建（推荐从项目根目录执行）
+cd ..
+
+# Windows
+.\build.ps1
+
+# Linux/macOS
+make build
+```
+
+或在 server 目录单独构建：
+
+```bash
+cd server
+go build -tags embed -o bin/server ./cmd/server
+```
+
+### 目录结构
+
+```
+server/
+├── cmd/server/         # 入口
+├── internal/
+│   ├── handler/       # HTTP handler + UI 文件服务
+│   ├── service/       # 业务逻辑
+│   ├── repository/    # 数据访问
+│   ├── model/         # 数据模型
+│   ├── middleware/    # Gin 中间件
+│   └── config/        # 配置
+├── data/              # SQLite 数据目录
+└── internal/ui/       # UI 构建产物（不提交到 git）
 ```
 
 ## 开发验证

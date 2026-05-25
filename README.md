@@ -60,7 +60,29 @@
 
 ## 快速开始
 
-### 1. 启动服务端
+### 方式1：使用构建好的单一二进制文件（推荐）
+
+构建并运行包含前端的单一二进制文件：
+
+```powershell
+# Windows
+.\build.ps1
+
+# Linux/macOS
+make build
+
+# 运行
+$env:CC_USAGE_SERVER_AUTH_TOKEN="dev-token"   # Windows
+export CC_USAGE_SERVER_AUTH_TOKEN="dev-token"  # Linux/macOS
+
+./server/bin/server    # 或 server.exe on Windows
+```
+
+然后访问 http://localhost:8080 查看仪表板。
+
+### 方式2：开发模式（前后端分离）
+
+#### 1. 启动服务端
 
 在仓库根目录执行：
 
@@ -152,6 +174,44 @@ go test ./...
 cd ../web
 npm run test
 ```
+
+## 构建说明
+
+项目使用 Go `embed` 将 web 静态资源打包进 server 二进制文件，提供单一文件部署能力。
+
+### Windows
+
+```powershell
+# 完整构建（前端 + 后端）
+.\build.ps1
+
+# 只构建前端
+.\build.ps1 -Target web
+
+# 只构建后端
+.\build.ps1 -Target server
+
+# 清理构建产物
+.\build.ps1 -Target clean
+```
+
+### Linux/macOS
+
+```bash
+# 完整构建（前端 + 后端）
+make build
+
+# 只构建前端
+make build-web
+
+# 只构建后端
+make build-server
+
+# 清理构建产物
+make clean
+```
+
+构建输出位置：`server/bin/server` 或 `server/bin/server.exe`
 
 ## 文档入口
 
