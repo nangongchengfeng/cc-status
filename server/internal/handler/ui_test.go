@@ -27,7 +27,7 @@ func setupTestDist(t *testing.T) (cleanup func()) {
 
 	// 创建 server 目录结构，相对于项目根目录的路径现在是 ./...
 	serverDir := filepath.Join(tmpDir, "server")
-	if err := os.MkdirAll(filepath.Join(serverDir, "internal", "ui", "dist"), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Join(serverDir, "internal", "handler", "ui", "dist"), 0755); err != nil {
 		t.Fatalf("failed to create dist dir: %v", err)
 	}
 	// 切换到 server 目录
@@ -36,7 +36,7 @@ func setupTestDist(t *testing.T) (cleanup func()) {
 	}
 
 	// 创建测试用的 index.html
-	indexPath := filepath.Join("internal", "ui", "dist", "index.html")
+	indexPath := filepath.Join("internal", "handler", "ui", "dist", "index.html")
 	indexContent := "<html><body>Test Index</body></html>"
 	if err := os.WriteFile(indexPath, []byte(indexContent), 0644); err != nil {
 		t.Fatalf("failed to write test index.html: %v", err)

@@ -13,7 +13,7 @@ import (
 )
 
 // 静态资源目录（相对于 server 目录）
-const uiDistDir = "internal/ui/dist"
+const uiDistDir = "internal/handler/ui/dist"
 
 // RegisterUIRoutes 注册 UI 相关路由
 // 如果没有静态资源可提供，则不注册任何路由
