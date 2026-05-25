@@ -1,0 +1,933 @@
+{
+  "projectInfo": {
+    "name": "cc-status",
+    "description": "围绕 Claude Code 使用量采集与汇总的全栈项目，包含 Go 客户端、Go 服务端 API 和 React 前端仪表板",
+    "path": "D:/Code/cc-status"
+  },
+  "filesByLanguage": {
+    "go": [
+      {
+        "path": "client/cmd/cc-usage-client/main.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 75,
+        "description": "客户端 CLI 入口，解析命令行参数并启动应用"
+      },
+      {
+        "path": "client/internal/claude/scan.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 280,
+        "description": "Claude 日志扫描器，从本地 Claude Code JSONL 会话日志文件中提取 token 使用记录"
+      },
+      {
+        "path": "client/internal/claude/scan_test.go",
+        "language": "go",
+        "fileType": "test",
+        "lineCount": 200,
+        "description": "Claude 日志扫描器的单元测试"
+      },
+      {
+        "path": "client/internal/cli/app.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 120,
+        "description": "CLI 应用主逻辑，定义 dry-run 和 sync 命令"
+      },
+      {
+        "path": "client/internal/cli/app_test.go",
+        "language": "go",
+        "fileType": "test",
+        "lineCount": 150,
+        "description": "CLI 应用的单元测试"
+      },
+      {
+        "path": "client/internal/cli/sync_test.go",
+        "language": "go",
+        "fileType": "test",
+        "lineCount": 180,
+        "description": "同步命令的集成测试"
+      },
+      {
+        "path": "client/internal/cli/bootstrap.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 140,
+        "description": "CLI 启动引导，加载配置、初始化存储和依赖"
+      },
+      {
+        "path": "client/internal/config/config.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 100,
+        "description": "客户端配置加载与解析，从配置文件和环境变量读取配置"
+      },
+      {
+        "path": "client/internal/config/config_test.go",
+        "language": "go",
+        "fileType": "test",
+        "lineCount": 80,
+        "description": "配置模块的单元测试"
+      },
+      {
+        "path": "client/internal/httpclient/sync_client.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 180,
+        "description": "HTTP 同步客户端，向服务端发送使用记录数据"
+      },
+      {
+        "path": "client/internal/lock/file_lock.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 80,
+        "description": "文件锁实现，防止多个客户端实例并发写入"
+      },
+      {
+        "path": "client/internal/lock/file_lock_test.go",
+        "language": "go",
+        "fileType": "test",
+        "lineCount": 70,
+        "description": "文件锁的单元测试"
+      },
+      {
+        "path": "client/internal/runtime/runtime.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 130,
+        "description": "运行时状态管理，跟踪已上报记录和同步状态"
+      },
+      {
+        "path": "client/internal/runtime/runtime_test.go",
+        "language": "go",
+        "fileType": "test",
+        "lineCount": 90,
+        "description": "运行时状态管理的单元测试"
+      },
+      {
+        "path": "client/internal/storage/sqlite.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 160,
+        "description": "SQLite 本地存储实现，持久化客户端状态"
+      },
+      {
+        "path": "client/internal/syncer/sync.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 120,
+        "description": "同步协调器，编排扫描和上传流程"
+      },
+      {
+        "path": "server/cmd/server/main.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 150,
+        "description": "服务端入口，启动 Gin HTTP 服务并注册路由"
+      },
+      {
+        "path": "server/internal/config/config.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 90,
+        "description": "服务端配置加载，从环境变量读取配置"
+      },
+      {
+        "path": "server/internal/config/config_test.go",
+        "language": "go",
+        "fileType": "test",
+        "lineCount": 70,
+        "description": "服务端配置模块的单元测试"
+      },
+      {
+        "path": "server/internal/handler/router.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 110,
+        "description": "Gin 路由注册，定义所有 API 路由和中间件"
+      },
+      {
+        "path": "server/internal/handler/response.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 60,
+        "description": "统一响应格式封装"
+      },
+      {
+        "path": "server/internal/handler/sync_handler.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 100,
+        "description": "同步 API 处理器，接收客户端上报的使用记录"
+      },
+      {
+        "path": "server/internal/handler/sync_handler_test.go",
+        "language": "go",
+        "fileType": "test",
+        "lineCount": 160,
+        "description": "同步 API 处理器的测试"
+      },
+      {
+        "path": "server/internal/handler/stats_handler.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 110,
+        "description": "统计 API 处理器，提供概览、趋势和仪表盘数据"
+      },
+      {
+        "path": "server/internal/handler/stats_handler_test.go",
+        "language": "go",
+        "fileType": "test",
+        "lineCount": 250,
+        "description": "统计 API 处理器的测试"
+      },
+      {
+        "path": "server/internal/handler/logs_handler.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 90,
+        "description": "日志查询 API 处理器，提供原始使用记录查询"
+      },
+      {
+        "path": "server/internal/handler/logs_handler_test.go",
+        "language": "go",
+        "fileType": "test",
+        "lineCount": 140,
+        "description": "日志查询 API 处理器的测试"
+      },
+      {
+        "path": "server/internal/handler/model_pricing_handler.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 140,
+        "description": "模型定价 API 处理器，管理模型价格配置"
+      },
+      {
+        "path": "server/internal/handler/model_pricing_handler_test.go",
+        "language": "go",
+        "fileType": "test",
+        "lineCount": 180,
+        "description": "模型定价 API 处理器的测试"
+      },
+      {
+        "path": "server/internal/handler/ui.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 60,
+        "description": "UI 静态文件服务处理器"
+      },
+      {
+        "path": "server/internal/handler/ui_embed.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 50,
+        "description": "UI 静态资源嵌入（编译时嵌入）"
+      },
+      {
+        "path": "server/internal/handler/ui_test.go",
+        "language": "go",
+        "fileType": "test",
+        "lineCount": 90,
+        "description": "UI 静态文件服务的测试"
+      },
+      {
+        "path": "server/internal/handler/router_test.go",
+        "language": "go",
+        "fileType": "test",
+        "lineCount": 80,
+        "description": "路由注册的测试"
+      },
+      {
+        "path": "server/internal/middleware/auth.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 70,
+        "description": "认证中间件，验证 Bearer token"
+      },
+      {
+        "path": "server/internal/middleware/auth_test.go",
+        "language": "go",
+        "fileType": "test",
+        "lineCount": 90,
+        "description": "认证中间件的测试"
+      },
+      {
+        "path": "server/internal/middleware/logger.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 50,
+        "description": "日志中间件，记录请求日志"
+      },
+      {
+        "path": "server/internal/model/entity/model_pricing.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 50,
+        "description": "模型定价数据库实体定义"
+      },
+      {
+        "path": "server/internal/model/entity/usage_report.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 60,
+        "description": "使用报告数据库实体定义"
+      },
+      {
+        "path": "server/internal/model/dto/sync.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 50,
+        "description": "同步 API 的请求和响应 DTO 定义"
+      },
+      {
+        "path": "server/internal/model/dto/stats.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 150,
+        "description": "统计 API 的请求和响应 DTO 定义"
+      },
+      {
+        "path": "server/internal/model/dto/model_pricing.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 50,
+        "description": "模型定价 API 的请求和响应 DTO 定义"
+      },
+      {
+        "path": "server/internal/repository/database.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 100,
+        "description": "数据库初始化与连接管理"
+      },
+      {
+        "path": "server/internal/repository/database_test.go",
+        "language": "go",
+        "fileType": "test",
+        "lineCount": 100,
+        "description": "数据库初始化的测试"
+      },
+      {
+        "path": "server/internal/repository/model_pricing_repository.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 130,
+        "description": "模型定价数据访问层"
+      },
+      {
+        "path": "server/internal/repository/usage_report_repository.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 120,
+        "description": "使用报告数据访问层"
+      },
+      {
+        "path": "server/internal/service/sync.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 220,
+        "description": "同步业务逻辑，处理上报数据、计算费用、持久化记录"
+      },
+      {
+        "path": "server/internal/service/sync_test.go",
+        "language": "go",
+        "fileType": "test",
+        "lineCount": 150,
+        "description": "同步业务逻辑的测试"
+      },
+      {
+        "path": "server/internal/service/stats.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 400,
+        "description": "统计业务逻辑，生成概览、趋势、排行等数据"
+      },
+      {
+        "path": "server/internal/service/logs.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 100,
+        "description": "日志查询业务逻辑"
+      },
+      {
+        "path": "server/internal/service/model_pricing.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 180,
+        "description": "模型定价管理业务逻辑"
+      },
+      {
+        "path": "server/internal/service/pricing.go",
+        "language": "go",
+        "fileType": "code",
+        "lineCount": 120,
+        "description": "费用计算逻辑，根据模型定价计算 token 费用"
+      }
+    ],
+    "typescript": [
+      {
+        "path": "web/src/api/http.ts",
+        "language": "typescript",
+        "fileType": "code",
+        "lineCount": 50,
+        "description": "HTTP 请求基础配置和 Axios 实例"
+      },
+      {
+        "path": "web/src/api/dashboard.ts",
+        "language": "typescript",
+        "fileType": "code",
+        "lineCount": 90,
+        "description": "仪表盘数据 API 封装"
+      },
+      {
+        "path": "web/src/api/dashboard.test.ts",
+        "language": "typescript",
+        "fileType": "test",
+        "lineCount": 70,
+        "description": "仪表盘 API 测试"
+      },
+      {
+        "path": "web/src/api/logs.ts",
+        "language": "typescript",
+        "fileType": "code",
+        "lineCount": 60,
+        "description": "日志查询 API 封装"
+      },
+      {
+        "path": "web/src/api/logs.test.ts",
+        "language": "typescript",
+        "fileType": "test",
+        "lineCount": 50,
+        "description": "日志查询 API 测试"
+      },
+      {
+        "path": "web/src/types/dashboard.ts",
+        "language": "typescript",
+        "fileType": "code",
+        "lineCount": 100,
+        "description": "仪表盘类型定义"
+      },
+      {
+        "path": "web/src/types/logs.ts",
+        "language": "typescript",
+        "fileType": "code",
+        "lineCount": 40,
+        "description": "日志类型定义"
+      },
+      {
+        "path": "web/src/hooks/useDashboardQuery.ts",
+        "language": "typescript",
+        "fileType": "code",
+        "lineCount": 80,
+        "description": "仪表盘数据查询自定义 React Query Hook"
+      },
+      {
+        "path": "web/src/hooks/useDashboardQuery.test.tsx",
+        "language": "tsx",
+        "fileType": "test",
+        "lineCount": 100,
+        "description": "仪表盘查询 Hook 的测试"
+      },
+      {
+        "path": "web/src/hooks/useRecentLogsQuery.ts",
+        "language": "typescript",
+        "fileType": "code",
+        "lineCount": 50,
+        "description": "最近日志查询自定义 React Query Hook"
+      },
+      {
+        "path": "web/src/utils/format.ts",
+        "language": "typescript",
+        "fileType": "code",
+        "lineCount": 90,
+        "description": "格式化工具函数（货币、数值、标签等）"
+      },
+      {
+        "path": "web/src/utils/format.test.ts",
+        "language": "typescript",
+        "fileType": "test",
+        "lineCount": 60,
+        "description": "格式化工具函数的测试"
+      },
+      {
+        "path": "web/src/utils/timeRange.ts",
+        "language": "typescript",
+        "fileType": "code",
+        "lineCount": 90,
+        "description": "时间范围预设和计算工具函数"
+      },
+      {
+        "path": "web/src/utils/timeRange.test.ts",
+        "language": "typescript",
+        "fileType": "test",
+        "lineCount": 50,
+        "description": "时间范围工具的测试"
+      },
+      {
+        "path": "web/src/constants/timeRanges.ts",
+        "language": "typescript",
+        "fileType": "code",
+        "lineCount": 50,
+        "description": "时间范围预设常量定义"
+      },
+      {
+        "path": "web/src/test/setup.ts",
+        "language": "typescript",
+        "fileType": "test",
+        "lineCount": 30,
+        "description": "测试环境设置"
+      },
+      {
+        "path": "web/src/vite-env.d.ts",
+        "language": "typescript",
+        "fileType": "config",
+        "lineCount": 20,
+        "description": "Vite 环境类型声明"
+      },
+      {
+        "path": "web/vite.config.ts",
+        "language": "typescript",
+        "fileType": "config",
+        "lineCount": 40,
+        "description": "Vite 构建配置"
+      },
+      {
+        "path": "web/tailwind.config.ts",
+        "language": "typescript",
+        "fileType": "config",
+        "lineCount": 40,
+        "description": "Tailwind CSS 配置"
+      }
+    ],
+    "tsx": [
+      {
+        "path": "web/src/main.tsx",
+        "language": "tsx",
+        "fileType": "code",
+        "lineCount": 40,
+        "description": "React 应用入口"
+      },
+      {
+        "path": "web/src/App.tsx",
+        "language": "tsx",
+        "fileType": "code",
+        "lineCount": 50,
+        "description": "React 应用根组件，配置路由和全局状态"
+      },
+      {
+        "path": "web/src/pages/Dashboard/DashboardPage.tsx",
+        "language": "tsx",
+        "fileType": "code",
+        "lineCount": 220,
+        "description": "仪表盘页面组件，整合所有图表和卡片"
+      },
+      {
+        "path": "web/src/pages/Dashboard/DashboardPage.test.tsx",
+        "language": "tsx",
+        "fileType": "test",
+        "lineCount": 120,
+        "description": "仪表盘页面的测试"
+      },
+      {
+        "path": "web/src/pages/Dashboard/DashboardPage.states.test.tsx",
+        "language": "tsx",
+        "fileType": "test",
+        "lineCount": 130,
+        "description": "仪表盘页面状态测试"
+      },
+      {
+        "path": "web/src/pages/Dashboard/components/OverviewCards.tsx",
+        "language": "tsx",
+        "fileType": "code",
+        "lineCount": 140,
+        "description": "概览卡片组件，显示总 token、费用、请求数等"
+      },
+      {
+        "path": "web/src/pages/Dashboard/components/CostTrendChart.tsx",
+        "language": "tsx",
+        "fileType": "code",
+        "lineCount": 100,
+        "description": "费用趋势图组件"
+      },
+      {
+        "path": "web/src/pages/Dashboard/components/TokenTrendChart.tsx",
+        "language": "tsx",
+        "fileType": "code",
+        "lineCount": 90,
+        "description": "Token 趋势图组件"
+      },
+      {
+        "path": "web/src/pages/Dashboard/components/ModelRanking.tsx",
+        "language": "tsx",
+        "fileType": "code",
+        "lineCount": 110,
+        "description": "模型排行图表组件"
+      },
+      {
+        "path": "web/src/pages/Dashboard/components/ClientRanking.tsx",
+        "language": "tsx",
+        "fileType": "code",
+        "lineCount": 120,
+        "description": "客户端排行图表组件"
+      },
+      {
+        "path": "web/src/pages/Dashboard/components/CacheAnalysis.tsx",
+        "language": "tsx",
+        "fileType": "code",
+        "lineCount": 100,
+        "description": "缓存效益分析组件"
+      },
+      {
+        "path": "web/src/pages/Dashboard/components/RecentRequestsTable.tsx",
+        "language": "tsx",
+        "fileType": "code",
+        "lineCount": 90,
+        "description": "最近请求列表组件"
+      },
+      {
+        "path": "web/src/pages/Dashboard/components/ChartViewport.tsx",
+        "language": "tsx",
+        "fileType": "code",
+        "lineCount": 60,
+        "description": "图表视口组件，响应式图表容器"
+      }
+    ],
+    "javascript": [
+      {
+        "path": "web/postcss.config.cjs",
+        "language": "javascript",
+        "fileType": "config",
+        "lineCount": 20,
+        "description": "PostCSS 配置"
+      }
+    ],
+    "yaml": [
+      {
+        "path": "client/config.example.yaml",
+        "language": "yaml",
+        "fileType": "config",
+        "lineCount": 20,
+        "description": "客户端配置示例文件"
+      },
+      {
+        "path": ".github/workflows/ci.yml",
+        "language": "yaml",
+        "fileType": "infra",
+        "lineCount": 80,
+        "description": "GitHub Actions CI/CD 流水线配置"
+      }
+    ],
+    "json": [
+      {
+        "path": "web/package.json",
+        "language": "json",
+        "fileType": "config",
+        "lineCount": 40,
+        "description": "Web 项目 NPM 包配置"
+      },
+      {
+        "path": "web/tsconfig.json",
+        "language": "json",
+        "fileType": "config",
+        "lineCount": 40,
+        "description": "TypeScript 配置"
+      },
+      {
+        "path": "web/tsconfig.app.json",
+        "language": "json",
+        "fileType": "config",
+        "lineCount": 30,
+        "description": "TypeScript 应用配置"
+      },
+      {
+        "path": "web/tsconfig.node.json",
+        "language": "json",
+        "fileType": "config",
+        "lineCount": 25,
+        "description": "TypeScript Node 配置"
+      }
+    ],
+    "markdown": [
+      {
+        "path": "README.md",
+        "language": "markdown",
+        "fileType": "docs",
+        "lineCount": 220,
+        "description": "项目主 README，包含项目介绍、快速开始、构建说明"
+      },
+      {
+        "path": "client/README.md",
+        "language": "markdown",
+        "fileType": "docs",
+        "lineCount": 100,
+        "description": "客户端模块 README"
+      },
+      {
+        "path": "server/README.md",
+        "language": "markdown",
+        "fileType": "docs",
+        "lineCount": 130,
+        "description": "服务端模块 README"
+      },
+      {
+        "path": "web/README.md",
+        "language": "markdown",
+        "fileType": "docs",
+        "lineCount": 90,
+        "description": "Web 前端模块 README"
+      },
+      {
+        "path": "CONTEXT.md",
+        "language": "markdown",
+        "fileType": "docs",
+        "lineCount": 100,
+        "description": "项目领域语言和约束文档"
+      },
+      {
+        "path": "client/CLAUDE.md",
+        "language": "markdown",
+        "fileType": "docs",
+        "lineCount": 100,
+        "description": "客户端 Claude 开发规范"
+      },
+      {
+        "path": "server/CLAUDE.md",
+        "language": "markdown",
+        "fileType": "docs",
+        "lineCount": 140,
+        "description": "服务端 Claude 开发规范"
+      },
+      {
+        "path": "web/CLAUDE.md",
+        "language": "markdown",
+        "fileType": "docs",
+        "lineCount": 160,
+        "description": "Web 前端 Claude 开发规范"
+      },
+      {
+        "path": "web/AGENTS.md",
+        "language": "markdown",
+        "fileType": "docs",
+        "lineCount": 60,
+        "description": "Web 前端 AGENTS 配置"
+      },
+      {
+        "path": "docs/adr/0001-server-domain-uses-usage-reports.md",
+        "language": "markdown",
+        "fileType": "docs",
+        "lineCount": 50,
+        "description": "架构决策记录：服务端领域使用 UsageReports"
+      },
+      {
+        "path": "docs/adr/0002-server-config-uses-stdlib-and-env.md",
+        "language": "markdown",
+        "fileType": "docs",
+        "lineCount": 40,
+        "description": "架构决策记录：服务端配置使用标准库和环境变量"
+      },
+      {
+        "path": "docs/plans/2026-05-21-client-bootstrap-implementation.md",
+        "language": "markdown",
+        "fileType": "docs",
+        "lineCount": 80,
+        "description": "客户端启动实现计划"
+      },
+      {
+        "path": "docs/plans/2026-05-22-dashboard-redesign-design.md",
+        "language": "markdown",
+        "fileType": "docs",
+        "lineCount": 120,
+        "description": "仪表盘重新设计设计文档"
+      },
+      {
+        "path": "docs/plans/2026-05-22-dashboard-redesign-implementation.md",
+        "language": "markdown",
+        "fileType": "docs",
+        "lineCount": 150,
+        "description": "仪表盘重新设计实现计划"
+      },
+      {
+        "path": "docs/plans/2026-05-22-web-dashboard-design.md",
+        "language": "markdown",
+        "fileType": "docs",
+        "lineCount": 110,
+        "description": "Web 仪表盘设计文档"
+      },
+      {
+        "path": "docs/plans/2026-05-22-web-dashboard-implementation.md",
+        "language": "markdown",
+        "fileType": "docs",
+        "lineCount": 130,
+        "description": "Web 仪表盘实现文档"
+      },
+      {
+        "path": ".scratch/claude-usage-sync/PRD.md",
+        "language": "markdown",
+        "fileType": "docs",
+        "lineCount": 180,
+        "description": "客户端同步需求文档"
+      },
+      {
+        "path": ".scratch/server-usage-sync/PRD.md",
+        "language": "markdown",
+        "fileType": "docs",
+        "lineCount": 200,
+        "description": "服务端同步需求文档"
+      },
+      {
+        "path": ".scratch/server-dashboard/PRD.md",
+        "language": "markdown",
+        "fileType": "docs",
+        "lineCount": 170,
+        "description": "服务端仪表盘需求文档"
+      },
+      {
+        "path": ".scratch/web-dashboard/PRD.md",
+        "language": "markdown",
+        "fileType": "docs",
+        "lineCount": 160,
+        "description": "Web 仪表盘需求文档"
+      },
+      {
+        "path": ".trae/rules/规范.md",
+        "language": "markdown",
+        "fileType": "docs",
+        "lineCount": 80,
+        "description": "项目代码规范"
+      }
+    ]
+  },
+  "filesByType": {
+    "code": [
+      "client/cmd/cc-usage-client/main.go",
+      "client/internal/claude/scan.go",
+      "client/internal/cli/app.go",
+      "client/internal/cli/bootstrap.go",
+      "client/internal/config/config.go",
+      "client/internal/httpclient/sync_client.go",
+      "client/internal/lock/file_lock.go",
+      "client/internal/runtime/runtime.go",
+      "client/internal/storage/sqlite.go",
+      "client/internal/syncer/sync.go",
+      "server/cmd/server/main.go",
+      "server/internal/config/config.go",
+      "server/internal/handler/router.go",
+      "server/internal/handler/response.go",
+      "server/internal/handler/sync_handler.go",
+      "server/internal/handler/stats_handler.go",
+      "server/internal/handler/logs_handler.go",
+      "server/internal/handler/model_pricing_handler.go",
+      "server/internal/handler/ui.go",
+      "server/internal/handler/ui_embed.go",
+      "server/internal/middleware/auth.go",
+      "server/internal/middleware/logger.go",
+      "server/internal/model/entity/model_pricing.go",
+      "server/internal/model/entity/usage_report.go",
+      "server/internal/model/dto/sync.go",
+      "server/internal/model/dto/stats.go",
+      "server/internal/model/dto/model_pricing.go",
+      "server/internal/repository/database.go",
+      "server/internal/repository/model_pricing_repository.go",
+      "server/internal/repository/usage_report_repository.go",
+      "server/internal/service/sync.go",
+      "server/internal/service/stats.go",
+      "server/internal/service/logs.go",
+      "server/internal/service/model_pricing.go",
+      "server/internal/service/pricing.go",
+      "web/src/api/http.ts",
+      "web/src/api/dashboard.ts",
+      "web/src/api/logs.ts",
+      "web/src/types/dashboard.ts",
+      "web/src/types/logs.ts",
+      "web/src/hooks/useDashboardQuery.ts",
+      "web/src/hooks/useRecentLogsQuery.ts",
+      "web/src/utils/format.ts",
+      "web/src/utils/timeRange.ts",
+      "web/src/constants/timeRanges.ts",
+      "web/src/main.tsx",
+      "web/src/App.tsx",
+      "web/src/pages/Dashboard/DashboardPage.tsx",
+      "web/src/pages/Dashboard/components/OverviewCards.tsx",
+      "web/src/pages/Dashboard/components/CostTrendChart.tsx",
+      "web/src/pages/Dashboard/components/TokenTrendChart.tsx",
+      "web/src/pages/Dashboard/components/ModelRanking.tsx",
+      "web/src/pages/Dashboard/components/ClientRanking.tsx",
+      "web/src/pages/Dashboard/components/CacheAnalysis.tsx",
+      "web/src/pages/Dashboard/components/RecentRequestsTable.tsx",
+      "web/src/pages/Dashboard/components/ChartViewport.tsx"
+    ],
+    "test": [
+      "client/internal/claude/scan_test.go",
+      "client/internal/cli/app_test.go",
+      "client/internal/cli/sync_test.go",
+      "client/internal/config/config_test.go",
+      "client/internal/lock/file_lock_test.go",
+      "client/internal/runtime/runtime_test.go",
+      "server/internal/config/config_test.go",
+      "server/internal/handler/sync_handler_test.go",
+      "server/internal/handler/stats_handler_test.go",
+      "server/internal/handler/logs_handler_test.go",
+      "server/internal/handler/model_pricing_handler_test.go",
+      "server/internal/handler/ui_test.go",
+      "server/internal/handler/router_test.go",
+      "server/internal/middleware/auth_test.go",
+      "server/internal/repository/database_test.go",
+      "server/internal/service/sync_test.go",
+      "web/src/api/dashboard.test.ts",
+      "web/src/api/logs.test.ts",
+      "web/src/hooks/useDashboardQuery.test.tsx",
+      "web/src/utils/format.test.ts",
+      "web/src/utils/timeRange.test.ts",
+      "web/src/test/setup.ts",
+      "web/src/pages/Dashboard/DashboardPage.test.tsx",
+      "web/src/pages/Dashboard/DashboardPage.states.test.tsx"
+    ],
+    "config": [
+      "client/config.example.yaml",
+      "web/package.json",
+      "web/tsconfig.json",
+      "web/tsconfig.app.json",
+      "web/tsconfig.node.json",
+      "web/vite.config.ts",
+      "web/tailwind.config.ts",
+      "web/postcss.config.cjs",
+      "web/src/vite-env.d.ts"
+    ],
+    "docs": [
+      "README.md",
+      "client/README.md",
+      "server/README.md",
+      "web/README.md",
+      "CONTEXT.md",
+      "client/CLAUDE.md",
+      "server/CLAUDE.md",
+      "web/CLAUDE.md",
+      "web/AGENTS.md",
+      "docs/adr/0001-server-domain-uses-usage-reports.md",
+      "docs/adr/0002-server-config-uses-stdlib-and-env.md",
+      "docs/plans/2026-05-21-client-bootstrap-implementation.md",
+      "docs/plans/2026-05-22-dashboard-redesign-design.md",
+      "docs/plans/2026-05-22-dashboard-redesign-implementation.md",
+      "docs/plans/2026-05-22-web-dashboard-design.md",
+      "docs/plans/2026-05-22-web-dashboard-implementation.md",
+      ".scratch/claude-usage-sync/PRD.md",
+      ".scratch/server-usage-sync/PRD.md",
+      ".scratch/server-dashboard/PRD.md",
+      ".scratch/web-dashboard/PRD.md",
+      ".trae/rules/规范.md"
+    ],
+    "infra": [
+      ".github/workflows/ci.yml"
+    ]
+  },
+  "summary": {
+    "totalFiles": 94,
+    "totalCodeFiles": 52,
+    "totalTestFiles": 24,
+    "totalConfigFiles": 10,
+    "totalDocFiles": 21,
+    "totalInfraFiles": 1,
+    "languages": ["go", "typescript", "tsx", "javascript", "yaml", "json", "markdown"],
+    "mainModules": ["client", "server", "web"]
+  }
+}
